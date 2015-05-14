@@ -24,7 +24,6 @@ object MongoClients {
       .sslSettings(SslSettings.builder.applyConnectionString(connectionString).build)
       .socketSettings(SocketSettings.builder.applyConnectionString(connectionString).build))
 
-
   private def createCluster(settings: MongoClientSettings, streamFactory: StreamFactory): Cluster =
     new DefaultClusterFactory().create(settings.clusterSettings, settings.serverSettings, settings
       .connectionPoolSettings, streamFactory, getHeartbeatStreamFactory(settings), settings.credentialList, null, new
@@ -33,13 +32,11 @@ object MongoClients {
   private def getHeartbeatStreamFactory(settings: MongoClientSettings): StreamFactory =
     getStreamFactory(settings.heartbeatSocketSettings, settings.sslSettings)
 
-
   private def getStreamFactory(settings: MongoClientSettings): StreamFactory =
     getStreamFactory(settings.socketSettings, settings.sslSettings)
 
-  private def getStreamFactory(socketSettings: SocketSettings, sslSettings: SslSettings): StreamFactory = {
-
-    System.getProperty("org.mongodb.async.type", "nio2") match {
+  private def getStreamFactory(socketSettings: SocketSettings, sslSettings: SslSettings): StreamFactory =
+    System.getProperty("org.mongodb.async.type", "netty") match {
       case "netty" =>
         new NettyStreamFactory(socketSettings, sslSettings)
       case streamType @ "nio2" =>
@@ -51,5 +48,4 @@ object MongoClients {
       case unsuportedStreamType =>
         throw new IllegalArgumentException("Unsupported stream type " + unsuportedStreamType)
     }
-  }
 }
