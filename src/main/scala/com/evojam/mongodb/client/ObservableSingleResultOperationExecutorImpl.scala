@@ -7,17 +7,20 @@ import com.mongodb.connection.Cluster
 import com.mongodb.operation.{ AsyncReadOperation, AsyncWriteOperation }
 import rx.lang.scala.subjects.AsyncSubject
 
-private[client] class ObservableOperationExecutorImpl(cluster: Cluster) extends ObservableOperationExecutor {
+class ObservableSingleResultOperationExecutorImpl(cluster: Cluster)
+  extends ObservableOperationExecutor {
 
   def bindWithCallback[T](subject: AsyncSubject[T]) =
     new SingleResultCallback[T] {
       override def onResult(result: T, error: Throwable) = {
         if(error == null) {
           // FIXME: still hate this part but if it works it's good enough until 1st refactor
-          require(result != null, "result cannot be null")
-          subject.onNext(result)
+
+          Option(result).foreach(subject.onNext)
+
           subject.onCompleted()
         } else {
+          require(result == null, "result cannot be not null")
           subject.onError(error)
         }
       }
@@ -27,7 +30,7 @@ private[client] class ObservableOperationExecutorImpl(cluster: Cluster) extends 
 
     val subject = AsyncSubject[T]()
 
-    val binding = ObservableOperationExecutorImpl.asyncReadWriteBinding(rp, cluster)
+    val binding = ObservableSingleResultOperationExecutorImpl.asyncReadWriteBinding(rp, cluster)
 
     subject.doOnTerminate(binding.release())
 
@@ -40,7 +43,7 @@ private[client] class ObservableOperationExecutorImpl(cluster: Cluster) extends 
 
     val subject = AsyncSubject[T]()
 
-    val binding = ObservableOperationExecutorImpl.asyncReadWriteBinding(ReadPreference.primary, cluster)
+    val binding = ObservableSingleResultOperationExecutorImpl.asyncReadWriteBinding(ReadPreference.primary, cluster)
 
     subject.doOnTerminate(binding.release())
 
@@ -50,11 +53,11 @@ private[client] class ObservableOperationExecutorImpl(cluster: Cluster) extends 
   }
 }
 
-object ObservableOperationExecutorImpl {
+object ObservableSingleResultOperationExecutorImpl {
   private def asyncReadWriteBinding(readPreference: ReadPreference, cluster: Cluster) = {
     require(readPreference != null, "readPreference cannot be null")
     new AsyncClusterBinding(cluster, readPreference)
   }
 
-  def apply(cluster: Cluster) = new ObservableOperationExecutorImpl(cluster)
+  def apply(cluster: Cluster) = new ObservableSingleResultOperationExecutorImpl(cluster)
 }
