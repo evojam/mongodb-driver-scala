@@ -6,7 +6,7 @@ import com.mongodb.async.{ AsyncBatchCursor, SingleResultCallback }
 import rx.lang.scala.Observable
 import rx.lang.scala.subjects.PublishSubject
 
-object Enriched {
+trait AsyncEnriched {
 
   implicit class AsyncBatchCursorEnriched[T](wrapped: AsyncBatchCursor[T]) {
 

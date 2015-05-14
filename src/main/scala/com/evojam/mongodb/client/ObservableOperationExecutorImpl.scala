@@ -7,8 +7,7 @@ import com.mongodb.connection.Cluster
 import com.mongodb.operation.{ AsyncReadOperation, AsyncWriteOperation }
 import rx.lang.scala.subjects.AsyncSubject
 
-class ObservableSingleResultOperationExecutorImpl(cluster: Cluster)
-  extends ObservableOperationExecutor {
+class ObservableOperationExecutorImpl(cluster: Cluster) extends ObservableOperationExecutor {
 
   def bindWithCallback[T](subject: AsyncSubject[T]) =
     new SingleResultCallback[T] {
@@ -30,7 +29,7 @@ class ObservableSingleResultOperationExecutorImpl(cluster: Cluster)
 
     val subject = AsyncSubject[T]()
 
-    val binding = ObservableSingleResultOperationExecutorImpl.asyncReadWriteBinding(rp, cluster)
+    val binding = ObservableOperationExecutorImpl.asyncReadWriteBinding(rp, cluster)
 
     subject.doOnTerminate(binding.release())
 
@@ -43,7 +42,7 @@ class ObservableSingleResultOperationExecutorImpl(cluster: Cluster)
 
     val subject = AsyncSubject[T]()
 
-    val binding = ObservableSingleResultOperationExecutorImpl.asyncReadWriteBinding(ReadPreference.primary, cluster)
+    val binding = ObservableOperationExecutorImpl.asyncReadWriteBinding(ReadPreference.primary, cluster)
 
     subject.doOnTerminate(binding.release())
 
@@ -53,11 +52,11 @@ class ObservableSingleResultOperationExecutorImpl(cluster: Cluster)
   }
 }
 
-object ObservableSingleResultOperationExecutorImpl {
+object ObservableOperationExecutorImpl {
   private def asyncReadWriteBinding(readPreference: ReadPreference, cluster: Cluster) = {
     require(readPreference != null, "readPreference cannot be null")
     new AsyncClusterBinding(cluster, readPreference)
   }
 
-  def apply(cluster: Cluster) = new ObservableSingleResultOperationExecutorImpl(cluster)
+  def apply(cluster: Cluster) = new ObservableOperationExecutorImpl(cluster)
 }

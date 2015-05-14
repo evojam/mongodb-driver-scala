@@ -26,7 +26,7 @@ private[client] class MongoClientImpl(
 
 object MongoClientImpl {
   def apply(settings: MongoClientSettings, cluster: Cluster) =
-    new MongoClientImpl(cluster, settings, ObservableSingleResultOperationExecutorImpl(cluster))
+    new MongoClientImpl(cluster, settings, ObservableOperationExecutorImpl(cluster))
 
   def apply(
     settings: MongoClientSettings,
