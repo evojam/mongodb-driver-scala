@@ -4,11 +4,13 @@ import com.mongodb.connection.Cluster
 import org.bson.codecs.configuration.CodecRegistry
 import rx.lang.scala.Observable
 
-private[client] class MongoClientImpl(cluster: Cluster, settings: MongoClientSettings,
-  executor: ObservableOperationExecutor, codecs: CodecRegistry) extends MongoClient {
+private[client] class MongoClientImpl(
+  val cluster: Cluster,
+  val settings: MongoClientSettings,
+  executor: ObservableOperationExecutor) extends MongoClient {
 
   override def getDatabase(name: String) =
-    new MongoDatabaseImpl(name, codecs, settings.readPreference, settings.writeConcern, executor)
+    new MongoDatabaseImpl(name, settings.codecRegistry, settings.readPreference, settings.writeConcern, executor)
 
   override def getSettings = settings
 
@@ -21,5 +23,12 @@ private[client] class MongoClientImpl(cluster: Cluster, settings: MongoClientSet
 
 
 object MongoClientImpl {
+  def apply(settings: MongoClientSettings, cluster: Cluster) =
+    new MongoClientImpl(cluster, settings, ObservableOperationExecutorImpl(cluster))
 
+  def apply(
+    settings: MongoClientSettings,
+    cluster: Cluster,
+    executor: ObservableOperationExecutor) =
+    new MongoClientImpl(cluster, settings, executor)
 }
