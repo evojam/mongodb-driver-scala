@@ -1,4 +1,4 @@
-package com.evojam.mongodb.client
+package com.evojam.mongodb.client.iterable
 
 import scala.concurrent.duration.TimeUnit
 

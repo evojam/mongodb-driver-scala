@@ -2,14 +2,15 @@ package com.evojam.mongodb.client
 
 import scala.concurrent.Future
 
-import rx.lang.scala.Observable
-
-import org.bson.codecs.configuration.CodecRegistry
-import org.bson.conversions.Bson
-
 import com.mongodb.client.model._
 import com.mongodb.client.result.{ UpdateResult, DeleteResult }
 import com.mongodb.{ MongoNamespace, WriteConcern, ReadPreference }
+import org.bson.codecs.configuration.CodecRegistry
+import org.bson.conversions.Bson
+import rx.lang.scala.Observable
+
+import com.evojam.mongodb.client.iterable.DistinctIterable
+import com.evojam.mongodb.client.iterable.ListIndexesIterable
 
 trait MongoCollection[T] {
 

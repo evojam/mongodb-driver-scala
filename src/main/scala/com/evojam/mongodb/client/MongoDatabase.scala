@@ -8,6 +8,8 @@ import org.bson.Document
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
 
+import com.evojam.mongodb.client.iterable.MongoIterable
+
 trait MongoDatabase {
 
   def withCodecRegistry(codecRegistry: CodecRegistry): MongoDatabase
