@@ -1,5 +1,5 @@
 package com.evojam.mongodb.client
 
-class ListCollectionsIterable[T] {
+trait ListCollectionsIterable[T] {
 
 }
