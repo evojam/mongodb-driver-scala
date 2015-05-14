@@ -2,8 +2,10 @@ package com.evojam.mongodb.client
 
 import java.util.Arrays._
 
+import scala.collection.JavaConversions._
+
 import com.mongodb.connection._
-import com.mongodb.{ MongoCredential, ReadPreference, WriteConcern }
+import com.mongodb.{ MongoCredential, ReadPreference, ServerAddress, WriteConcern }
 import org.bson.codecs.configuration.CodecRegistries._
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.codecs.{ BsonValueCodecProvider, DocumentCodecProvider, ValueCodecProvider }
@@ -45,26 +47,26 @@ case class MongoClientSettings(
 object MongoClientSettings {
 
   object Default {
-    val readPreference: ReadPreference = ReadPreference.primary()
+    lazy val readPreference: ReadPreference = ReadPreference.primary()
 
-    val writeConcern: WriteConcern = WriteConcern.NORMAL
+    lazy val writeConcern: WriteConcern = WriteConcern.NORMAL
 
-    val credentialList: List[MongoCredential] = Nil
+    lazy val credentialList: List[MongoCredential] = Nil
 
-    val codecRegistry: CodecRegistry =
+    lazy val codecRegistry: CodecRegistry =
       fromProviders(asList(new ValueCodecProvider, new DocumentCodecProvider, new BsonValueCodecProvider))
 
-    val clusterSettings: ClusterSettings = ClusterSettings.builder().build()
+    lazy val clusterSettings: ClusterSettings = ClusterSettings.builder().hosts(List(new ServerAddress())).build()
 
-    val socketSettings: SocketSettings = SocketSettings.builder().build()
+    lazy val socketSettings: SocketSettings = SocketSettings.builder().build()
 
-    val heartbeatSocketSettings: SocketSettings = SocketSettings.builder().build()
+    lazy val heartbeatSocketSettings: SocketSettings = SocketSettings.builder().build()
 
-    val connectionPoolSettings: ConnectionPoolSettings = ConnectionPoolSettings.builder().build()
+    lazy val connectionPoolSettings: ConnectionPoolSettings = ConnectionPoolSettings.builder().build()
 
-    val serverSettings: ServerSettings = ServerSettings.builder().build()
+    lazy val serverSettings: ServerSettings = ServerSettings.builder().build()
 
-    val sslSettings: SslSettings = SslSettings.builder().build()
+    lazy val sslSettings: SslSettings = SslSettings.builder().build()
   }
 
   def apply(): MongoClientSettings = apply(
