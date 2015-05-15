@@ -42,7 +42,7 @@ case class ListDatabasesIterableImpl[T](resultClass: Class[T], codecRegistry: Co
 
   override def batchSize(batchSize: Int) = ???
 
-  override def collect(batchSize: Option[Int]) = ???
+  override def cursor(batchSize: Option[Int]) = ???
 
   override def headOpt = ???
 

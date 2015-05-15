@@ -10,7 +10,7 @@ trait MongoClient extends Closeable {
 
   def getDatabase(name: String): MongoDatabase
 
-  def getSettings: MongoClientSettings
+  def settings: MongoClientSettings
 
   def listDatabaseNames(): Future[List[String]]
 

@@ -15,7 +15,7 @@ class OperationIterable[T](operation: AsyncReadOperation[_ <: AsyncBatchCursor[T
 
   override def head = ???
 
-  override def collect(batchSize: Option[Int]) = ???
+  override def cursor(batchSize: Option[Int]) = ???
 
   override def headOpt = ???
 
