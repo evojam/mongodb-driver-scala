@@ -1,25 +1,34 @@
 package com.evojam.mongodb.client.iterable
 
+// TODO: Think about execution context we want to use
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+import scala.language.existentials
+
 import com.evojam.mongodb.client.ObservableOperationExecutor
 import com.evojam.mongodb.client.util.AsyncEnriched
 import com.mongodb.ReadPreference
 import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.operation.AsyncReadOperation
 
-class OperationIterable[T](operation: AsyncReadOperation[_ <: AsyncBatchCursor[T]], readPreference: ReadPreference,
+case class OperationIterable[T](operation: AsyncReadOperation[_ <: AsyncBatchCursor[T]], readPreference: ReadPreference,
   executor: ObservableOperationExecutor) extends MongoIterable[T] with AsyncEnriched {
 
-  def batchSize(batchSize: Int): OperationIterable[T] = throw new UnsupportedOperationException
+  private lazy val observable = executor.execute(operation, readPreference).flatMap(_.asObservable)
 
-  def observable() = executor.execute(operation, readPreference).flatMap(_.asObservable)
+  override def head = headOpt.map(_.get)
 
-  override def head = ???
+  override def cursor(batchSize: Option[Int]) = observable
 
-  override def cursor(batchSize: Option[Int]) = ???
+  override def headOpt: Future[Option[T]] =
+    executor.execute(operation, readPreference)
+      .flatMap(_.takeFirstAsObservable)
+      .first
+      .toList
+      .map(_.headOption).toBlocking.toFuture
 
-  override def headOpt = ???
+  override def foreach(f: T => Unit) = observable.foreach(f)
 
-  override def foreach(f: (T) => Unit) = ???
-
-  override def map[U](f: (T) => U) = ???
+  override def map[U](f: T => U) = ResultIterable(observable.map(f))
 }
