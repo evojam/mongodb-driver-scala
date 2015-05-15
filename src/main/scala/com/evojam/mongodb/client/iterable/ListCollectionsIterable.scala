@@ -3,41 +3,72 @@ package com.evojam.mongodb.client.iterable
 import scala.concurrent.Future
 
 import com.evojam.mongodb.client.ObservableOperationExecutor
+import com.evojam.mongodb.client.model.ListCollectionOperation
+
 import com.mongodb.ReadPreference
-import com.mongodb.async.AsyncBatchCursor
-import com.mongodb.operation.ListCollectionsOperation
+
 import org.bson.BsonDocument
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
 
-class ListCollectionsIterable[T](dbName: String, resultClass: Class[T], codecRegistry: CodecRegistry,
-  readPreference: ReadPreference, executor: ObservableOperationExecutor) extends MongoIterable[T] {
+class ListCollectionsIterable[TDoc <: Any : Manifest]( // scalastyle:ignore
+  dbName: String,
+  codecRegistry: CodecRegistry,
+  readPreference: ReadPreference,
+  executor: ObservableOperationExecutor,
+  var filter: Bson,
+  var maxTime: Long,
+  var batchSize: Int) extends MongoIterable[TDoc] {
 
-  def filter(filter: Bson): ListCollectionsIterable[T] = ???
+  private val documentClass = manifest[TDoc].runtimeClass
 
-  def maxTime(time: Long): ListCollectionsIterable[T] = ???
+  def filter(filter: Bson): ListCollectionsIterable[TDoc] = {
+    this.filter = filter; this
+  }
 
-  def batchSize(size: Int): ListCollectionsIterable[T] = ???
+  def maxTime(time: Long): ListCollectionsIterable[TDoc] = {
+    this.maxTime = time; this
+  }
 
-  def batchCursor(): Future[AsyncBatchCursor[T]] = ???
+  def batchSize(size: Int): ListCollectionsIterable[TDoc] = {
+    this.batchSize = size; this
+  }
 
-  private def execute(): MongoIterable[T] = ???
+  private def execute: MongoIterable[TDoc] =
+    execute(queryOperation)
 
-  private def execute(operation: ListCollectionsOperation[T]): MongoIterable[T] = ???
+  private def execute(lco: ListCollectionOperation[TDoc]): MongoIterable[TDoc] =
+    new OperationIterable[TDoc](lco, readPreference, executor)
 
-  private def createListCollectionsOperation(): ListCollectionsOperation[T] = ???
+  private def queryOperation: ListCollectionOperation[TDoc] =
+    ListCollectionOperation[TDoc](
+      dbName,
+      codecRegistry.get(documentClass.asInstanceOf[Class[TDoc]]),
+      toBsonDocument(filter),
+      batchSize,
+      maxTime)
 
-  private def toBsonDocument(document: Bson): BsonDocument = ???
+  override def head: Future[TDoc] =
+    execute(queryOperation.copy(batchSize = -1)).head
 
-  override def head: Future[T] = ???
+  override def map[TRes](f: TDoc => TRes): MappingIterable[TDoc, TRes] =
+    MappingIterable[TDoc, TRes](this, f)
 
-  override def map[U](f: T => U): MappingIterable[T, U] = ???
+  override def headOpt =
+    execute(queryOperation.copy(batchSize = -1)).headOpt
 
-  override def headOpt = ???
+  override def cursor(batchSize: Option[Int]) =
+    execute.cursor(batchSize)
 
-  override def cursor(batchSize: Option[Int]) = ???
+  override def foreach(f: TDoc => Unit) =
+    execute.foreach(f)
 
-  override def foreach(f: (T) => Unit) = ???
+  private def toBsonDocument(bson: Bson): BsonDocument =
+    if (bson == null) {
+      null
+    } else {
+      bson.toBsonDocument(documentClass, codecRegistry)
+    }
 
-  override def collect() = ???
+  override def collect() = execute.collect()
 }
