@@ -5,11 +5,12 @@ import com.mongodb.async.SingleResultCallback
 import com.mongodb.binding.AsyncClusterBinding
 import com.mongodb.connection.Cluster
 import com.mongodb.operation.{ AsyncReadOperation, AsyncWriteOperation }
-import rx.lang.scala.subjects.AsyncSubject
+import rx.lang.scala.Observer
+import rx.lang.scala.subjects.ReplaySubject
 
 class ObservableOperationExecutorImpl(cluster: Cluster) extends ObservableOperationExecutor {
 
-  def bindWithCallback[T](subject: AsyncSubject[T]) =
+  def bindWithCallback[T](subject: Observer[T]) =
     new SingleResultCallback[T] {
       override def onResult(result: T, error: Throwable) = {
         if(error == null) {
@@ -27,7 +28,7 @@ class ObservableOperationExecutorImpl(cluster: Cluster) extends ObservableOperat
 
   override def execute[T](op: AsyncReadOperation[T], rp: ReadPreference) = {
 
-    val subject = AsyncSubject[T]()
+    val subject = ReplaySubject[T]()
 
     val binding = ObservableOperationExecutorImpl.asyncReadWriteBinding(rp, cluster)
 
@@ -35,12 +36,12 @@ class ObservableOperationExecutorImpl(cluster: Cluster) extends ObservableOperat
 
     op.executeAsync(binding, bindWithCallback(subject))
 
-    subject
+    subject.first
   }
 
   override def execute[T](op: AsyncWriteOperation[T]) = {
 
-    val subject = AsyncSubject[T]()
+    val subject = ReplaySubject[T]()
 
     val binding = ObservableOperationExecutorImpl.asyncReadWriteBinding(ReadPreference.primary, cluster)
 
@@ -48,7 +49,7 @@ class ObservableOperationExecutorImpl(cluster: Cluster) extends ObservableOperat
 
     op.executeAsync(binding, bindWithCallback(subject))
 
-    subject
+    subject.first
   }
 }
 
