@@ -29,7 +29,7 @@ class ListCollectionsIterable[T](dbName: String, resultClass: Class[T], codecReg
 
   private def toBsonDocument(document: Bson): BsonDocument = ???
 
-  override def head(): Future[T] = ???
+  override def head: Future[T] = ???
 
   override def map[U](f: T => U): MappingIterable[T, U] = ???
 
@@ -38,4 +38,6 @@ class ListCollectionsIterable[T](dbName: String, resultClass: Class[T], codecReg
   override def cursor(batchSize: Option[Int]) = ???
 
   override def foreach(f: (T) => Unit) = ???
+
+  override def collect() = ???
 }
