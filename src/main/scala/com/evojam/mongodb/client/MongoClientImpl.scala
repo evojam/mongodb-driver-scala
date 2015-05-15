@@ -1,11 +1,8 @@
 package com.evojam.mongodb.client
 
-import java.util.concurrent.TimeUnit._
-
+import com.evojam.mongodb.client.iterable.{ ListDatabasesIterableImpl, MongoIterable }
 import com.mongodb.connection.Cluster
-import com.mongodb.operation.ListDatabasesOperation
-import org.bson.codecs.configuration.CodecRegistry
-import rx.lang.scala.Observable
+import org.bson.BsonDocument
 
 private[client] class MongoClientImpl(
   cluster: Cluster,
@@ -15,9 +12,15 @@ private[client] class MongoClientImpl(
   override def getDatabase(name: String) =
     new MongoDatabaseImpl(name, settings.codecRegistry, settings.readPreference, settings.writeConcern, executor)
 
-  override def listDatabases(): Observable[String] = ???
+  override def listDatabases(): MongoIterable[String] =
+    ListDatabasesIterableImpl[BsonDocument](
+      classOf[BsonDocument],
+      settings.codecRegistry,
+      settings.readPreference,
+      executor)
+      .map(_.getString("name").getValue)
 
-  override def listDatabaseNames() = listDatabases().toList.toBlocking.toFuture
+  override def listDatabaseNames() = listDatabases().collect()
 
   override def close() = cluster.close()
 }
@@ -32,7 +35,4 @@ object MongoClientImpl {
     executor: ObservableOperationExecutor) =
     new MongoClientImpl(cluster, settings, executor)
 
-  // TODO: this is a weird place for this
-  def listDatabasesOperation[T](resultClass: Class[T], maxTimeMS: Long, codecRegistry: CodecRegistry) =
-    new ListDatabasesOperation[T](codecRegistry.get(resultClass)).maxTime(maxTimeMS, MILLISECONDS)
 }

@@ -27,8 +27,8 @@ trait AsyncEnriched {
         override def onResult(result: java.util.List[T], t: Throwable) = {
           if(t == null) {
             Option(result)
-              .map(_.foreach(subject.onNext)) // FIXME: Better map to Unit than patternmatch
-              .getOrElse(subject.onCompleted())
+              .foreach(_.foreach(subject.onNext))
+            subject.onCompleted()
           } else {
             subject.onError(t)
           }

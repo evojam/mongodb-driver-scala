@@ -23,4 +23,6 @@ case class ResultIterable[T](wrapped: Observable[T]) extends MongoIterable[T] wi
   override def foreach(f: T => Unit) = wrapped.foreach(f)
 
   override def map[U](f: T => U) = ResultIterable(wrapped.map(f))
+
+  override def collect() = wrapped.toList.toBlocking.toFuture
 }

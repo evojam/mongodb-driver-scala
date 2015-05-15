@@ -31,4 +31,6 @@ case class OperationIterable[T](operation: AsyncReadOperation[_ <: AsyncBatchCur
   override def foreach(f: T => Unit) = observable.foreach(f)
 
   override def map[U](f: T => U) = ResultIterable(observable.map(f))
+
+  override def collect() = observable.toList.toBlocking.toFuture
 }

@@ -1,23 +1,14 @@
 package com.evojam.mongodb.client.iterable
 
-import java.util.concurrent.TimeUnit
-
-import scala.concurrent.Future
-
-import com.mongodb.CursorType
-import com.mongodb.MongoNamespace
-import com.mongodb.ReadPreference
+import com.evojam.mongodb.client.ObservableOperationExecutor
+import com.evojam.mongodb.client.model.{ FindOperation, FindOptions }
+import com.mongodb.{ MongoNamespace, ReadPreference }
 import org.bson.BsonDocument
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
-import rx.Observable
-
-import com.evojam.mongodb.client.ObservableOperationExecutor
-import com.evojam.mongodb.client.model.FindOptions
-import com.evojam.mongodb.client.model.FindOperation
 
 
-case class FindIterable[TDoc <: Any : Manifest, TRes <: Any : Manifest]( // scalastyle:ignore
+case class FindIterable[TDoc <: Any : Manifest, TRes <: Any : Manifest](// scalastyle:ignore
   filter: Bson,
   findOptions: FindOptions,
   namespace: MongoNamespace,
@@ -57,27 +48,29 @@ case class FindIterable[TDoc <: Any : Manifest, TRes <: Any : Manifest]( // scal
 
   private def queryOperation =
     FindOperation[TRes](
-     namespace = namespace,
-     decoder = codecRegistry.get(resultClass.asInstanceOf[Class[TRes]]),
-     filter = bsonDocument(filter),
-     batchSize = findOptions.batchSize,
-     skip = findOptions.skip,
-     limit = findOptions.limit,
-     maxTime = findOptions.maxTime,
-     maxTimeUnit = findOptions.maxTimeUnit,
-     modifiers = bsonDocument(findOptions.modifiers),
-     projection = bsonDocument(findOptions.projection),
-     sort = bsonDocument(findOptions.sort),
-     cursorType = findOptions.cursorType,
-     noCursorTimeout = findOptions.noCursorTimeout,
-     oplogRelay = findOptions.oplogRelay,
-     partial = findOptions.partial,
-     slaveOk = readPreference.isSlaveOk)
+      namespace = namespace,
+      decoder = codecRegistry.get(resultClass.asInstanceOf[Class[TRes]]),
+      filter = bsonDocument(filter),
+      batchSize = findOptions.batchSize,
+      skip = findOptions.skip,
+      limit = findOptions.limit,
+      maxTime = findOptions.maxTime,
+      maxTimeUnit = findOptions.maxTimeUnit,
+      modifiers = bsonDocument(findOptions.modifiers),
+      projection = bsonDocument(findOptions.projection),
+      sort = bsonDocument(findOptions.sort),
+      cursorType = findOptions.cursorType,
+      noCursorTimeout = findOptions.noCursorTimeout,
+      oplogRelay = findOptions.oplogRelay,
+      partial = findOptions.partial,
+      slaveOk = readPreference.isSlaveOk)
 
   private def bsonDocument(bson: Bson): BsonDocument =
-    if (bson== null) {
+    if(bson == null) {
       null
     } else {
       bson.toBsonDocument(documentClass, codecRegistry)
     }
+
+  override def collect() = execute.collect()
 }

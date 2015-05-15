@@ -9,6 +9,8 @@ case class MappingIterable[T, U](
   require(iterable != null, "iterable cannot be null")
   require(mapper != null, "mapper cannot be null")
 
+  lazy val mapped = iterable.map(mapper)
+
   override def head =
     iterable.head.map(mapper)
 
@@ -23,4 +25,6 @@ case class MappingIterable[T, U](
 
   override def cursor(batchSize: Option[Int]) =
     iterable.cursor(batchSize).map(mapper)
+
+  override def collect() = iterable.map(mapper).collect()
 }
