@@ -3,8 +3,8 @@ package com.evojam.mongodb.client.util
 import scala.collection.JavaConversions._
 
 import com.mongodb.async.{ AsyncBatchCursor, SingleResultCallback }
+
 import rx.lang.scala.Observable
-import rx.lang.scala.subjects.ReplaySubject
 
 trait AsyncEnriched {
 
@@ -19,26 +19,19 @@ trait AsyncEnriched {
       observable.take(1)
     }
 
-    def asObservable: Observable[T] = {
+    def asObservable: Observable[T] =
+      Observable[T](subscriber =>
+        wrapped.next(new SingleResultCallback[java.util.List[T]] {
+          override def onResult(result: java.util.List[T], t: Throwable) =
+            if(t == null) {
+              Option(result)
+                .foreach(_.foreach(subscriber.onNext))
+              subscriber.onCompleted()
+              wrapped.close()
+            } else {
+              subscriber.onError(t)
+            }
+        }))
 
-      val subject = ReplaySubject[T]()
-
-      // TODO: Try to fire next when subscriber connects
-      wrapped.next(new SingleResultCallback[java.util.List[T]] {
-        override def onResult(result: java.util.List[T], t: Throwable) = {
-          if(t == null) {
-            Option(result)
-              .foreach(_.foreach(subject.onNext))
-            subject.onCompleted()
-            wrapped.close()
-          } else {
-            subject.onError(t)
-          }
-        }
-      })
-
-      subject
-    }
   }
-
 }
