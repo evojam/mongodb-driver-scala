@@ -11,8 +11,6 @@ import org.bson.codecs.configuration.CodecRegistry
 
 trait ListDatabasesIterable[T] extends MongoIterable[T] {
   def maxTime(maxTime: Long, timeUnit: TimeUnit): ListDatabasesIterable[T]
-
-  def batchSize(batchSize: Int): ListDatabasesIterable[T]
 }
 
 case class ListDatabasesIterableImpl[T](resultClass: Class[T], codecRegistry: CodecRegistry,
@@ -22,33 +20,18 @@ case class ListDatabasesIterableImpl[T](resultClass: Class[T], codecRegistry: Co
   def maxTime(maxTime: Long, timeUnit: TimeUnit): ListDatabasesIterable[T] =
     this.copy[T](maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit))
 
-  //  private def execute: MongoIterable[T] = {
-  //    return execute(createListDatabasesOperation)
-  //  }
-  //
-  //  private def execute(operation: ListDatabasesOperation[T]): MongoIterable[T] = {
-  //    return new OperationIterable[T](operation, readPreference, executor)
-  //  }
-  //
-  // class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>>
-
   private def createOperation: ListDatabasesOperation[T] =
     new ListDatabasesOperation[T](codecRegistry.get(resultClass)).maxTime(maxTimeMS, MILLISECONDS)
 
-  private def execute() = {
-    val x = executor.execute(createOperation, readPreference)
-    ???
-  }
+  lazy val executedOperation = OperationIterable(createOperation, readPreference, executor)
 
-  override def batchSize(batchSize: Int) = ???
+  override def cursor(batchSize: Option[Int]) = executedOperation.cursor(batchSize)
 
-  override def cursor(batchSize: Option[Int]) = ???
+  override def headOpt = executedOperation.headOpt
 
-  override def headOpt = ???
+  override def foreach(f: (T) => Unit) = executedOperation.foreach(f)
 
-  override def foreach(f: (T) => Unit) = ???
+  override def map[U](f: (T) => U) = executedOperation.map(f)
 
-  override def map[U](f: (T) => U) = ???
-
-  override def head = ???
+  override def head = executedOperation.head
 }
