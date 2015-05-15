@@ -4,7 +4,7 @@ import scala.collection.JavaConversions._
 
 import com.mongodb.async.{ AsyncBatchCursor, SingleResultCallback }
 import rx.lang.scala.Observable
-import rx.lang.scala.subjects.PublishSubject
+import rx.lang.scala.subjects.ReplaySubject
 
 trait AsyncEnriched {
 
@@ -21,7 +21,7 @@ trait AsyncEnriched {
 
     def asObservable: Observable[T] = {
 
-      val subject = PublishSubject[T]()
+      val subject = ReplaySubject[T]()
 
       wrapped.next(new SingleResultCallback[java.util.List[T]] {
         override def onResult(result: java.util.List[T], t: Throwable) = {

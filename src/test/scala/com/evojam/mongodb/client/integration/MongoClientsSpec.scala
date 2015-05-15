@@ -13,7 +13,7 @@ class MongoClientsSpec extends Specification {
 
   "MongoClients" should {
     "list databases" in {
-      MongoClients.create.listDatabaseNames() must beAnInstanceOf[List[String]].await(10)
+      MongoClients.create.listDatabaseNames() must not be empty.await(10)
     }
   }
 }
