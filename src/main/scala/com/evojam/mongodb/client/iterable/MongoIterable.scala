@@ -14,4 +14,6 @@ trait MongoIterable[T] {
   def map[U](f: T => U): MongoIterable[U]
 
   def cursor(batchSize: Option[Int] = None): Observable[T]
+
+  def collect(): Future[List[T]]
 }

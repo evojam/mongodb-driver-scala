@@ -34,4 +34,6 @@ case class ListDatabasesIterableImpl[T](resultClass: Class[T], codecRegistry: Co
   override def map[U](f: (T) => U) = executedOperation.map(f)
 
   override def head = executedOperation.head
+
+  override def collect() = executedOperation.collect()
 }

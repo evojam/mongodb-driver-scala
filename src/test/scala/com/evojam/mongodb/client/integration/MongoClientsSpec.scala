@@ -10,4 +10,10 @@ class MongoClientsSpec extends Specification {
       MongoClients.create must beAnInstanceOf[MongoClient]
     }
   }
+
+  "MongoClients" should {
+    "list databases" in {
+      MongoClients.create.listDatabaseNames() must beAnInstanceOf[List[String]].await(10)
+    }
+  }
 }

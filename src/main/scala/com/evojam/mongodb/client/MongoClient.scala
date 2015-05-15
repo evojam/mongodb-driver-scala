@@ -4,7 +4,7 @@ import java.io.Closeable
 
 import scala.concurrent.Future
 
-import rx.lang.scala.Observable
+import com.evojam.mongodb.client.iterable.MongoIterable
 
 trait MongoClient extends Closeable {
 
@@ -14,5 +14,5 @@ trait MongoClient extends Closeable {
 
   def listDatabaseNames(): Future[List[String]]
 
-  def listDatabases(): Observable[String]
+  def listDatabases(): MongoIterable[String]
 }
