@@ -10,7 +10,7 @@ private[client] class MongoClientImpl(
   executor: ObservableOperationExecutor) extends MongoClient {
 
   override def getDatabase(name: String) =
-    new MongoDatabaseImpl(name, settings.codecRegistry, settings.readPreference, settings.writeConcern, executor)
+    new MongoDatabase(name, settings.codecRegistry, settings.readPreference, settings.writeConcern, executor)
 
   override def listDatabases(): MongoIterable[String] =
     ListDatabasesIterableImpl[BsonDocument](

@@ -9,11 +9,16 @@ class MongoClientsSpec extends Specification {
     "create MongoClient and connect" in {
       MongoClients.create must beAnInstanceOf[MongoClient]
     }
-  }
 
-  "MongoClients" should {
     "list databases" in {
       MongoClients.create.listDatabaseNames() must not be empty.await(10)
     }
+
+    "list collections" in {
+      val db = MongoClients.create.getDatabase("local")
+
+      db.listCollectionNames must not be empty.await(10)
+    }
+
   }
 }

@@ -2,36 +2,38 @@ package com.evojam.mongodb.client.iterable
 
 import scala.concurrent.Future
 
-import com.evojam.mongodb.client.ObservableOperationExecutor
-import com.evojam.mongodb.client.model.ListCollectionOperation
-
 import com.mongodb.ReadPreference
-
 import org.bson.BsonDocument
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
 
-class ListCollectionsIterable[TDoc <: Any : Manifest]( // scalastyle:ignore
+import com.evojam.mongodb.client.ObservableOperationExecutor
+import com.evojam.mongodb.client.model.ListCollectionOperation
+
+case class ListCollectionsIterable[TDoc <: Any : Manifest]( // scalastyle:ignore
   dbName: String,
   codecRegistry: CodecRegistry,
   readPreference: ReadPreference,
   executor: ObservableOperationExecutor,
-  var filter: Bson,
-  var maxTime: Long,
-  var batchSize: Int) extends MongoIterable[TDoc] {
+  filter: Option[Bson] = None,
+  maxTime: Option[Long] = None,
+  batchSize: Option[Int] = None) extends MongoIterable[TDoc] {
 
   private val documentClass = manifest[TDoc].runtimeClass
 
   def filter(filter: Bson): ListCollectionsIterable[TDoc] = {
-    this.filter = filter; this
+    require(filter != null, "filter cannot be null")
+    this.copy(filter = Some(filter))
   }
 
   def maxTime(time: Long): ListCollectionsIterable[TDoc] = {
-    this.maxTime = time; this
+    require(time >= 0L, "time cannot be negative")
+    this.copy(maxTime = Some(time))
   }
 
   def batchSize(size: Int): ListCollectionsIterable[TDoc] = {
-    this.batchSize = size; this
+    require(size >= 0, "size cannot be negative")
+    this.copy(batchSize = Some(size))
   }
 
   private def execute: MongoIterable[TDoc] =
@@ -44,18 +46,18 @@ class ListCollectionsIterable[TDoc <: Any : Manifest]( // scalastyle:ignore
     ListCollectionOperation[TDoc](
       dbName,
       codecRegistry.get(documentClass.asInstanceOf[Class[TDoc]]),
-      toBsonDocument(filter),
+      filter.map(toBsonDocument),
       batchSize,
       maxTime)
 
   override def head: Future[TDoc] =
-    execute(queryOperation.copy(batchSize = -1)).head
+    execute(queryOperation.copy(batchSize = Some(-1))).head
 
   override def map[TRes](f: TDoc => TRes): MappingIterable[TDoc, TRes] =
     MappingIterable[TDoc, TRes](this, f)
 
   override def headOpt =
-    execute(queryOperation.copy(batchSize = -1)).headOpt
+    execute(queryOperation.copy(batchSize = Some(-1))).headOpt
 
   override def cursor(batchSize: Option[Int]) =
     execute.cursor(batchSize)
