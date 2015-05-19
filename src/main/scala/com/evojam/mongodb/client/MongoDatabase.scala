@@ -1,7 +1,6 @@
 package com.evojam.mongodb.client
 
 import scala.concurrent.Future
-
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
 import com.mongodb.client.model.CreateCollectionOptions
@@ -9,9 +8,9 @@ import org.bson.BsonDocument
 import org.bson.Document
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
-
 import com.evojam.mongodb.client.iterable.ListCollectionsIterable
 import com.evojam.mongodb.client.iterable.MongoIterable
+import com.mongodb.MongoNamespace
 
 class MongoDatabase(
   name: String,
@@ -42,9 +41,26 @@ class MongoDatabase(
       ReadPreference.primary(),
       executor).map(_.getString("name").getValue)
 
-  def getCollection(collectionName: String): MongoCollection[Document] = ???
+  def listCollections(): MongoIterable[Document] =
+    listCollections[Document]
 
-  def getCollection[T](collectionName: String, documentClass: Class[T]): MongoCollection[T] = ???
+  def listCollections[T <: Any: Manifest](): MongoIterable[T] =
+    ListCollectionsIterable[T](
+      name,
+      codec,
+      ReadPreference.primary(),
+      executor)
+
+  def collection(collectionName: String): MongoCollection[Document] =
+    getCollection[Document](collectionName)
+
+  def getCollection[T <: Any : Manifest](collectionName: String): MongoCollection[T] =
+    MongoCollection[T](
+      new MongoNamespace(name, collectionName),
+      codec,
+      readPref,
+      writeConcern,
+      executor)
 
   def runCommand(command: Bson): Future[Document] = ???
 
@@ -55,8 +71,6 @@ class MongoDatabase(
   def runCommand[T](command: Bson, resultClass: Class[T], readPref: ReadPreference): Future[T] = ???
 
   def drop(): Future[Unit] = ???
-
-  def listCollections[T](): MongoIterable[T] = ???
 
   def createCollection(collectionName: String): Future[Unit] = ???
 
