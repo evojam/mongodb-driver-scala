@@ -5,51 +5,43 @@ import com.mongodb.async.SingleResultCallback
 import com.mongodb.binding.AsyncClusterBinding
 import com.mongodb.connection.Cluster
 import com.mongodb.operation.{ AsyncReadOperation, AsyncWriteOperation }
-import rx.lang.scala.Observer
-import rx.lang.scala.subjects.ReplaySubject
+import rx.lang.scala.{ Observable, Subscriber }
 
 class ObservableOperationExecutorImpl(cluster: Cluster) extends ObservableOperationExecutor {
 
-  def bindWithCallback[T](subject: Observer[T]) =
+  def bindWithCallback[T](subscriber: Subscriber[T]) =
     new SingleResultCallback[T] {
       override def onResult(result: T, error: Throwable) = {
         if(error == null) {
-          // FIXME: still hate this part but if it works it's good enough until 1st refactor
-
-          Option(result).foreach(subject.onNext)
-
-          subject.onCompleted()
+          Option(result).foreach(subscriber.onNext)
+          subscriber.onCompleted()
         } else {
           require(result == null, "result cannot be not null")
-          subject.onError(error)
+          subscriber.onError(error)
         }
       }
     }
 
-  override def execute[T](op: AsyncReadOperation[T], rp: ReadPreference) = {
-
-    val subject = ReplaySubject[T]()
+  override def executeAsync[T](op: AsyncReadOperation[T], rp: ReadPreference) = {
 
     val binding = ObservableOperationExecutorImpl.asyncReadWriteBinding(rp, cluster)
 
-    subject.doOnTerminate(binding.release())
+    val observable = Observable[T](sub => op.executeAsync(binding, bindWithCallback(sub)))
 
-    op.executeAsync(binding, bindWithCallback(subject))
+    observable.doOnTerminate(binding.release())
 
-    subject.first
+    observable.first
   }
 
-  override def execute[T](op: AsyncWriteOperation[T]) = {
-
-    val subject = ReplaySubject[T]()
+  override def executeAsync[T](op: AsyncWriteOperation[T]) = {
 
     val binding = ObservableOperationExecutorImpl.asyncReadWriteBinding(ReadPreference.primary, cluster)
 
-    subject.doOnTerminate(binding.release())
+    val observable = Observable[T](sub => op.executeAsync(binding, bindWithCallback(sub)))
 
-    op.executeAsync(binding, bindWithCallback(subject))
+    observable.doOnTerminate(binding.release())
 
-    subject.first
+    observable.first
   }
 }
 

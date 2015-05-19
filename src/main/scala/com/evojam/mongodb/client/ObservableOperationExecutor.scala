@@ -40,7 +40,7 @@ public interface SingleResultCallback<T> {
 
 trait ObservableOperationExecutor {
 
-  def execute[T](asyncReadOperation: AsyncReadOperation[T], readPreference: ReadPreference): Observable[T]
+  def executeAsync[T](asyncReadOperation: AsyncReadOperation[T], readPreference: ReadPreference): Observable[T]
 
-  def execute[T](asyncWriteOperation: AsyncWriteOperation[T]): Observable[T]
+  def executeAsync[T](asyncWriteOperation: AsyncWriteOperation[T]): Observable[T]
 }
