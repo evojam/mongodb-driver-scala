@@ -9,6 +9,7 @@ import com.mongodb.MongoNamespace
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
 import com.mongodb.bulk.IndexRequest
+import com.mongodb.bulk.DeleteRequest
 import com.mongodb.bulk.InsertRequest
 import com.mongodb.bulk.WriteRequest
 import com.mongodb.client.model.CountOptions
@@ -18,10 +19,10 @@ import com.mongodb.client.model.FindOneAndUpdateOptions
 import com.mongodb.client.model.InsertManyOptions
 import com.mongodb.client.model.RenameCollectionOptions
 import com.mongodb.client.model.UpdateOptions
-import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
 import org.bson.BsonDocument
 import org.bson.BsonDocumentWrapper
+import org.bson.Document
 import org.bson.codecs.CollectibleCodec
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
@@ -105,9 +106,15 @@ case class MongoCollection[TDoc <: Any : Manifest](//scalastyle:ignore
         options.isOrdered,
         writeConcern)).toList.toBlocking.toFuture.map(_ => ())
 
-  def deleteOne(filter: Bson): Future[DeleteResult] = ???
+  def deleteOne(filter: Bson) = delete(filter, false)
 
-  def deleteMany(filter: Bson): Future[DeleteResult] = ???
+  def deleteMany(filter: Bson) = delete(filter, true)
+
+  def deleteAll() = delete(new Document(), true)
+
+  // TODO: should return Future[DeleteResult]
+  def delete(filter: Bson, multi: Boolean): Future[Unit] =
+    executeSingleWriteRequest(new DeleteRequest(filter))
 
   def replaceOne(filter: Bson, replacement: TDoc): Future[UpdateResult] = ???
 
@@ -167,6 +174,13 @@ case class MongoCollection[TDoc <: Any : Manifest](//scalastyle:ignore
 
   private implicit def documentToBsonDocument(doc: TDoc): BsonDocument =
     BsonDocumentWrapper.asBsonDocument(doc, codecRegistry)
+
+  private implicit def bsonToBsonDocument(bson: Bson): BsonDocument =
+    if (bson == null) {
+      null
+    } else {
+      bson.toBsonDocument(documentClass, codecRegistry)
+    }
 
   private def addIdIfAbsent(doc: TDoc) = codec match {
     case collCodec: CollectibleCodec[TDoc] =>

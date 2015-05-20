@@ -40,15 +40,20 @@ class MongoCollectionSpec extends Specification {
   }
 
   "MongoCollection" should {
-    "insert document to collection" in {
-      val collection =
-        MongoClients.create.getDatabase("testdb")
-          .collection("acollection")
+    val collection =
+      MongoClients.create.getDatabase("testdb")
+        .collection("acollection")
 
-      val res = collection.insertOne(new Document())
+    "insert and then delete document from collection" in {
+      val insertRes = collection.insertOne(new Document())
         .flatMap(_ => collection.find[Document]().collect)
 
-      res must not be empty.await(10)
+      insertRes must not be empty.await(10)
+
+      val deleteRes = collection.deleteAll
+        .flatMap(_ => collection.find[Document]().collect)
+
+      deleteRes must haveSize[List[Document]](0).await(10)
     }
   }
 }
