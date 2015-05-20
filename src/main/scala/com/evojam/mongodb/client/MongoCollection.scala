@@ -26,9 +26,11 @@ import com.evojam.mongodb.client.iterable.DistinctIterable
 import com.evojam.mongodb.client.iterable.ListIndexesIterable
 import com.evojam.mongodb.client.model.CountOperation
 import com.evojam.mongodb.client.model.CountOperation.countOperation2Mongo
+import com.evojam.mongodb.client.model.FindOptions
 import com.evojam.mongodb.client.util.BsonUtil
+import com.evojam.mongodb.client.iterable.FindIterable
 
-case class MongoCollection[T <: Any : Manifest](
+case class MongoCollection[TDoc <: Any : Manifest]( // scalastyle:ignore
   namespace: MongoNamespace,
   implicit val codecRegistry: CodecRegistry,
   implicit val readPreference: ReadPreference,
@@ -41,15 +43,15 @@ case class MongoCollection[T <: Any : Manifest](
   require(writeConcern != null, "writeConcern cannot be null")
   require(executor != null, "executor cannot be null")
 
-  implicit val documentClass = manifest[T].runtimeClass
+  implicit val documentClass = manifest[TDoc].runtimeClass
 
-  def withCodecRegistry(codecRegistry: CodecRegistry): MongoCollection[T] =
+  def withCodecRegistry(codecRegistry: CodecRegistry): MongoCollection[TDoc] =
     this.copy(codecRegistry = codecRegistry)
 
-  def withReadPreference(readPreference: ReadPreference): MongoCollection[T] =
+  def withReadPreference(readPreference: ReadPreference): MongoCollection[TDoc] =
     this.copy(readPreference = readPreference)
 
-  def withWriteConcern(writeConcern: WriteConcern): MongoCollection[T] =
+  def withWriteConcern(writeConcern: WriteConcern): MongoCollection[TDoc] =
     this.copy(writeConcern = writeConcern)
 
   def count(): Future[Long] =
@@ -66,33 +68,32 @@ case class MongoCollection[T <: Any : Manifest](
         options),
       readPreference).toBlocking.toFuture.map(_.longValue)
 
+  def find[TRes <: Any : Manifest](): FindIterable[TDoc, TRes] =
+    find[TRes](new BsonDocument())
+
+  def find[TRes <: Any : Manifest](filter: Bson): FindIterable[TDoc, TRes] =
+    FindIterable[TDoc, TRes](filter, FindOptions(), namespace,
+      readPreference, codecRegistry, executor)
+
   def distinct[U](filedName: String, resultClass: Class[U]): DistinctIterable[U] = ???
-
-  def find(): Observable[T] = ???
-
-  def find[U](resultClass: Class[U]): Observable[U] = ???
-
-  def find(filter: Bson): Observable[T] = ???
-
-  def find[U](filter: Bson, resultClass: Class[U]): Observable[U] = ???
 
   // TODO: Aggregate
   // TODO: MapReduce
   // TODO: Bulk write/read
 
-  def insertOne(document: T): Future[Unit] = ???
+  def insertOne(document: TDoc): Future[Unit] = ???
 
-  def insertMany(documents: Iterable[T]): Future[Unit] = ???
+  def insertMany(documents: Iterable[TDoc]): Future[Unit] = ???
 
-  def insertMany(documents: Iterable[T], options: InsertManyOptions): Future[Unit] = ???
+  def insertMany(documents: Iterable[TDoc], options: InsertManyOptions): Future[Unit] = ???
 
   def deleteOne(filter: Bson): Future[DeleteResult] = ???
 
   def deleteMany(filter: Bson): Future[DeleteResult] = ???
 
-  def replaceOne(filter: Bson, replacement: T): Future[UpdateResult] = ???
+  def replaceOne(filter: Bson, replacement: TDoc): Future[UpdateResult] = ???
 
-  def replaceOne(filter: Bson, replacement: T, options: UpdateOptions): Future[UpdateResult] = ???
+  def replaceOne(filter: Bson, replacement: TDoc, options: UpdateOptions): Future[UpdateResult] = ???
 
   def updateOne(filter: Bson, update: Bson): Future[UpdateResult] = ???
 
@@ -100,17 +101,17 @@ case class MongoCollection[T <: Any : Manifest](
 
   def updateMany(filter: Bson, update: Bson, options: UpdateOptions): Future[UpdateResult] = ???
 
-  def findOneAndDelete(filter: Bson): Future[T] = ???
+  def findOneAndDelete(filter: Bson): Future[TDoc] = ???
 
-  def findOneAndDelete(filter: Bson, options: FindOneAndDeleteOptions): Future[T] = ???
+  def findOneAndDelete(filter: Bson, options: FindOneAndDeleteOptions): Future[TDoc] = ???
 
-  def findOneAndReplace(filter: Bson, replacement: T): Future[T] = ???
+  def findOneAndReplace(filter: Bson, replacement: TDoc): Future[TDoc] = ???
 
-  def findOneAndReplace(filter: Bson, replacement: T, options: FindOneAndReplaceOptions): Future[T] = ???
+  def findOneAndReplace(filter: Bson, replacement: TDoc, options: FindOneAndReplaceOptions): Future[TDoc] = ???
 
-  def findOneAndUpdate(filter: Bson, update: Bson): Future[T] = ???
+  def findOneAndUpdate(filter: Bson, update: Bson): Future[TDoc] = ???
 
-  def findOneAndUpdate(filter: Bson, update: Bson, options: FindOneAndUpdateOptions): Future[T] = ???
+  def findOneAndUpdate(filter: Bson, update: Bson, options: FindOneAndUpdateOptions): Future[TDoc] = ???
 
   def drop(): Future[Unit] = ???
 
@@ -120,9 +121,9 @@ case class MongoCollection[T <: Any : Manifest](
 
   def createIndex(indexes: Iterable[IndexModel]): Future[String] = ???
 
-  def listIndexes(): ListIndexesIterable[T] = ???
+  def listIndexes(): ListIndexesIterable[TDoc] = ???
 
-  def listIndexes[U](resultClass: Class[U]): ListIndexesIterable[T] = ???
+  def listIndexes[U](resultClass: Class[U]): ListIndexesIterable[TDoc] = ???
 
   def dropIndex(indexName: String): Future[Unit] = ???
 

@@ -7,7 +7,6 @@ import org.bson.BsonDocument
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
 
-
 case class FindIterable[TDoc <: Any : Manifest, TRes <: Any : Manifest](// scalastyle:ignore
   filter: Bson,
   findOptions: FindOptions,
@@ -24,7 +23,7 @@ case class FindIterable[TDoc <: Any : Manifest, TRes <: Any : Manifest](// scala
   require(executor != null, "executor cannt be null")
 
   private val documentClass = manifest[TDoc].runtimeClass
-  private val resultClass = manifest[TRes]
+  private val resultClass = manifest[TRes].runtimeClass
 
   override def head =
     execute(queryOperation.copy(batchSize = 0, limit = -1)).head
