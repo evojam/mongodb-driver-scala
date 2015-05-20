@@ -20,7 +20,7 @@ class MongoCollectionSpec extends Specification {
 
     "find on collections" in {
       val docs = collection
-        .find[Document]
+        .find[Document]()
         .collect
 
       docs must not be empty.await(10)
@@ -28,7 +28,7 @@ class MongoCollectionSpec extends Specification {
 
     "limit find to single result" in {
       val docs = collection
-        .find[Document]
+        .find[Document]()
         .limit(1)
 
       docs.collect must haveSize[List[Document]](1).await(10)

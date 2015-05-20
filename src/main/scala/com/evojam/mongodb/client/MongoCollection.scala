@@ -67,14 +67,16 @@ case class MongoCollection[TDoc <: Any : Manifest](//scalastyle:ignore
         options),
       readPreference).toBlocking.toFuture.map(_.longValue)
 
-  def find[TRes <: Any : Manifest](): FindIterable[TDoc, TRes] =
-    find[TRes](new BsonDocument())
-
-  def find[TRes <: Any : Manifest](filter: Bson): FindIterable[TDoc, TRes] =
+  def find[TRes <: Any : Manifest](
+    filter: Bson = new BsonDocument()): FindIterable[TDoc, TRes] =
     FindIterable[TDoc, TRes](filter, FindOptions(), namespace,
       readPreference, codecRegistry, executor)
 
-  def distinct[U](filedName: String, resultClass: Class[U]): DistinctIterable[U] = ???
+  def distinct[TRes <: Any : Manifest](
+    fieldName: String,
+    filter: Bson = new BsonDocument): DistinctIterable[TDoc, TRes] =
+    DistinctIterable[TDoc, TRes](fieldName, filter, namespace,
+      readPreference, codecRegistry, executor)
 
   // TODO: Aggregate
   // TODO: MapReduce
