@@ -6,6 +6,9 @@ import org.bson.Document
 import com.evojam.mongodb.client.MongoClients
 
 class MongoCollectionSpec extends Specification {
+
+  // TODO: Seed data into collection prior to testing
+
   "MongoCollection" should {
     val collection =
       MongoClients.create.getDatabase("local")
@@ -29,6 +32,10 @@ class MongoCollectionSpec extends Specification {
         .limit(1)
 
       docs.collect must haveSize[List[Document]](1).await(10)
+    }
+
+    "list indexes" in {
+      collection.listIndexes.collect must not be empty.await(10)
     }
   }
 }

@@ -17,15 +17,14 @@ import com.mongodb.client.model.RenameCollectionOptions
 import com.mongodb.client.model.UpdateOptions
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
+
 import org.bson.BsonDocument
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
-import rx.lang.scala.Observable
 
 import com.evojam.mongodb.client.iterable.DistinctIterable
 import com.evojam.mongodb.client.iterable.ListIndexesIterable
 import com.evojam.mongodb.client.model.CountOperation
-import com.evojam.mongodb.client.model.CountOperation.countOperation2Mongo
 import com.evojam.mongodb.client.model.FindOptions
 import com.evojam.mongodb.client.util.BsonUtil
 import com.evojam.mongodb.client.iterable.FindIterable
@@ -61,7 +60,7 @@ case class MongoCollection[TDoc <: Any : Manifest]( // scalastyle:ignore
     count(Some(filter), new CountOptions())
 
   def count(filter: Option[Bson], options: CountOptions): Future[Long] =
-    executor.execute(
+    executor.executeAsync(
       CountOperation(
         namespace,
         filter.map(BsonUtil.toBsonDocument).getOrElse(new BsonDocument),
@@ -121,9 +120,8 @@ case class MongoCollection[TDoc <: Any : Manifest]( // scalastyle:ignore
 
   def createIndex(indexes: Iterable[IndexModel]): Future[String] = ???
 
-  def listIndexes(): ListIndexesIterable[TDoc] = ???
-
-  def listIndexes[U](resultClass: Class[U]): ListIndexesIterable[TDoc] = ???
+  def listIndexes[TRes <: Any : Manifest](): ListIndexesIterable[TDoc, TRes] =
+    ListIndexesIterable[TDoc, TRes](namespace, readPreference, codecRegistry, executor = executor)
 
   def dropIndex(indexName: String): Future[Unit] = ???
 
