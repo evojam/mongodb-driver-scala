@@ -8,7 +8,7 @@ import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
 
 import com.evojam.mongodb.client.ObservableOperationExecutor
-import com.evojam.mongodb.client.model.ListCollectionOperation
+import com.evojam.mongodb.client.model.operation.ListCollectionOperation
 
 case class ListCollectionsIterable[TDoc <: Any : Manifest]( // scalastyle:ignore
   dbName: String,

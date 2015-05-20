@@ -1,11 +1,11 @@
-package com.evojam.mongodb.client.model
+package com.evojam.mongodb.client.model.options
 
 import java.util.concurrent.TimeUnit
 
 import scala.language.implicitConversions
 
-import com.mongodb.client.model.{ FindOptions => MongoFindOptions }
 import com.mongodb.CursorType
+import com.mongodb.client.model.{FindOptions => MongoFindOptions}
 import org.bson.conversions.Bson
 
 case class FindOptions(

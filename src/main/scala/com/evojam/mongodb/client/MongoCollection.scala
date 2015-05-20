@@ -6,12 +6,11 @@ import scala.concurrent.Future
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
+import com.mongodb.bulk.IndexRequest
 import com.mongodb.client.model.CountOptions
 import com.mongodb.client.model.FindOneAndDeleteOptions
 import com.mongodb.client.model.FindOneAndReplaceOptions
 import com.mongodb.client.model.FindOneAndUpdateOptions
-import com.mongodb.client.model.IndexModel
-import com.mongodb.client.model.IndexOptions
 import com.mongodb.client.model.InsertManyOptions
 import com.mongodb.client.model.RenameCollectionOptions
 import com.mongodb.client.model.UpdateOptions
@@ -24,12 +23,13 @@ import org.bson.conversions.Bson
 
 import com.evojam.mongodb.client.iterable.DistinctIterable
 import com.evojam.mongodb.client.iterable.ListIndexesIterable
-import com.evojam.mongodb.client.model.CountOperation
-import com.evojam.mongodb.client.model.FindOptions
-import com.evojam.mongodb.client.util.BsonUtil
 import com.evojam.mongodb.client.iterable.FindIterable
+import com.evojam.mongodb.client.model.IndexModel
+import com.evojam.mongodb.client.model.operation.{CreateIndexesOperation, CountOperation}
+import com.evojam.mongodb.client.model.options.{IndexOptions, FindOptions}
+import com.evojam.mongodb.client.util.BsonUtil
 
-case class MongoCollection[TDoc <: Any : Manifest]( // scalastyle:ignore
+case class MongoCollection[TDoc <: Any : Manifest](//scalastyle:ignore
   namespace: MongoNamespace,
   implicit val codecRegistry: CodecRegistry,
   implicit val readPreference: ReadPreference,
@@ -114,11 +114,22 @@ case class MongoCollection[TDoc <: Any : Manifest]( // scalastyle:ignore
 
   def drop(): Future[Unit] = ???
 
-  def createIndex(key: Bson): Future[String] = ???
+  private def buildIndexRequests(indexes: List[IndexModel]) =
+    indexes.foldRight(List.empty[IndexRequest])(
+      (model, requests) => requests :+ model.asIndexRequest())
 
-  def createIndex(key: Bson, options: IndexOptions): Future[String] = ???
+  def createIndex(key: Bson): Future[Unit] =
+    createIndex(key, IndexOptions())
 
-  def createIndex(indexes: Iterable[IndexModel]): Future[String] = ???
+  def createIndex(key: Bson, options: IndexOptions): Future[Unit] =
+    createIndexes(List(IndexModel(key, options)))
+
+  def createIndexes(indexes: List[IndexModel]): Future[Unit] = {
+      import scala.collection.JavaConversions._
+      executor.executeAsync(CreateIndexesOperation(namespace, buildIndexRequests(indexes)))
+        .toBlocking.toFuture
+        .map(_ => ())
+    }
 
   def listIndexes[TRes <: Any : Manifest](): ListIndexesIterable[TDoc, TRes] =
     ListIndexesIterable[TDoc, TRes](namespace, readPreference, codecRegistry, executor = executor)

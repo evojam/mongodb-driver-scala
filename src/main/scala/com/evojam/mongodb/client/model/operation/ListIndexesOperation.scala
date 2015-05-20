@@ -1,13 +1,11 @@
-package com.evojam.mongodb.client.model
+package com.evojam.mongodb.client.model.operation
 
 import java.util.concurrent.TimeUnit
 
-import scala.language.implicitConversions
-import scala.language.postfixOps
+import scala.language.{implicitConversions, postfixOps}
 
-import com.mongodb.operation.{ ListIndexesOperation => MongoListIndexesOperation }
 import com.mongodb.MongoNamespace
-
+import com.mongodb.operation.{ListIndexesOperation => MongoListIndexesOperation}
 import org.bson.codecs.Decoder
 
 case class ListIndexesOperation[T](

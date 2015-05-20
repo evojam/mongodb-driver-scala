@@ -8,7 +8,8 @@ import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
 
 import com.evojam.mongodb.client.ObservableOperationExecutor
-import com.evojam.mongodb.client.model.{ FindOperation, FindOptions }
+import com.evojam.mongodb.client.model.operation.FindOperation
+import com.evojam.mongodb.client.model.options.FindOptions
 
 case class FindIterable[TDoc <: Any : Manifest, TRes <: Any : Manifest](// scalastyle:ignore
   filter: Bson,

@@ -1,7 +1,7 @@
 package com.evojam.mongodb.client.iterable
 
 import com.evojam.mongodb.client.ObservableOperationExecutor
-import com.evojam.mongodb.client.model.ListIndexesOperation
+import com.evojam.mongodb.client.model.operation.ListIndexesOperation
 
 import com.mongodb.{ MongoNamespace, ReadPreference }
 

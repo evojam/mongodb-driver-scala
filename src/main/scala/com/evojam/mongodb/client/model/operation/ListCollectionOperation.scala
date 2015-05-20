@@ -1,10 +1,10 @@
-package com.evojam.mongodb.client.model
+package com.evojam.mongodb.client.model.operation
 
 import java.util.concurrent.TimeUnit.MILLISECONDS
 
 import scala.language.implicitConversions
 
-import com.mongodb.operation.{ ListCollectionsOperation => MongoListCollectionsOperation }
+import com.mongodb.operation.{ListCollectionsOperation => MongoListCollectionsOperation}
 import org.bson.BsonDocument
 import org.bson.codecs.Decoder
 

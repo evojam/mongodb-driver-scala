@@ -1,4 +1,4 @@
-package com.evojam.mongodb.client.model
+package com.evojam.mongodb.client.model.operation
 
 import java.util.concurrent.TimeUnit
 
@@ -7,10 +7,8 @@ import scala.language.implicitConversions
 import com.mongodb.MongoNamespace
 import com.mongodb.client.model.CountOptions
 import com.mongodb.operation.{CountOperation => MongoCountOperation}
-import org.bson.BsonDocument
-import org.bson.BsonString
-import org.bson.BsonValue
 import org.bson.codecs.configuration.CodecRegistry
+import org.bson.{BsonDocument, BsonString, BsonValue}
 
 import com.evojam.mongodb.client.util.BsonUtil
 

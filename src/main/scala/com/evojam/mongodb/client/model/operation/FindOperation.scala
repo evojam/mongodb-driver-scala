@@ -1,18 +1,13 @@
-package com.evojam.mongodb.client.model
+package com.evojam.mongodb.client.model.operation
 
 import java.util.concurrent.TimeUnit
 
 import scala.language.implicitConversions
 
-import com.mongodb.CursorType
-import com.mongodb.MongoNamespace
-import com.mongodb.ReadPreference
-import com.mongodb.operation.{ FindOperation => MongoFindOperation }
-
+import com.mongodb.operation.{FindOperation => MongoFindOperation}
+import com.mongodb.{CursorType, MongoNamespace}
 import org.bson.BsonDocument
 import org.bson.codecs.Decoder
-import org.bson.conversions.Bson
-import org.bson.codecs.configuration.CodecRegistry
 
 case class FindOperation[T](
   namespace: MongoNamespace,
