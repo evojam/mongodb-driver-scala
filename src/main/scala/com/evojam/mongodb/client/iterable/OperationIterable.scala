@@ -15,14 +15,14 @@ import com.mongodb.operation.AsyncReadOperation
 case class OperationIterable[T](operation: AsyncReadOperation[_ <: AsyncBatchCursor[T]], readPreference: ReadPreference,
   executor: ObservableOperationExecutor) extends MongoIterable[T] with AsyncEnriched {
 
-  private lazy val observable = executor.execute(operation, readPreference).flatMap(_.asObservable)
+  private lazy val observable = executor.executeAsync(operation, readPreference).flatMap(_.asObservable)
 
   override def head = headOpt.map(_.get)
 
   override def cursor(batchSize: Option[Int]) = observable
 
   override def headOpt: Future[Option[T]] =
-    executor.execute(operation, readPreference)
+    executor.executeAsync(operation, readPreference)
       .flatMap(_.takeFirstAsObservable)
       .first
       .toList
