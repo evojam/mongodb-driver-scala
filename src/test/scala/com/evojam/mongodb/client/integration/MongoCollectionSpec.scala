@@ -1,7 +1,7 @@
 package com.evojam.mongodb.client.integration
 
-import org.specs2.mutable.Specification
 import org.bson.Document
+import org.specs2.mutable.Specification
 
 import com.evojam.mongodb.client.MongoClients
 
@@ -36,6 +36,19 @@ class MongoCollectionSpec extends Specification {
 
     "list indexes" in {
       collection.listIndexes.collect must not be empty.await(10)
+    }
+  }
+
+  "MongoCollection" should {
+    "insert document to collection" in {
+      val collection =
+        MongoClients.create.getDatabase("testdb")
+          .collection("acollection")
+
+      val res = collection.insertOne(new Document())
+        .flatMap(_ => collection.find[Document]().collect)
+
+      res must not be empty.await(10)
     }
   }
 }

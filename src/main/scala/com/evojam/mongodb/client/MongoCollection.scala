@@ -1,12 +1,16 @@
 package com.evojam.mongodb.client
 
+import scala.collection.JavaConversions.seqAsJavaList
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.language.implicitConversions
 
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
 import com.mongodb.bulk.IndexRequest
+import com.mongodb.bulk.InsertRequest
+import com.mongodb.bulk.WriteRequest
 import com.mongodb.client.model.CountOptions
 import com.mongodb.client.model.FindOneAndDeleteOptions
 import com.mongodb.client.model.FindOneAndReplaceOptions
@@ -16,17 +20,21 @@ import com.mongodb.client.model.RenameCollectionOptions
 import com.mongodb.client.model.UpdateOptions
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
-
 import org.bson.BsonDocument
+import org.bson.BsonDocumentWrapper
+import org.bson.codecs.CollectibleCodec
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
 
 import com.evojam.mongodb.client.iterable.DistinctIterable
-import com.evojam.mongodb.client.iterable.ListIndexesIterable
 import com.evojam.mongodb.client.iterable.FindIterable
+import com.evojam.mongodb.client.iterable.ListIndexesIterable
 import com.evojam.mongodb.client.model.IndexModel
-import com.evojam.mongodb.client.model.operation.{CreateIndexesOperation, CountOperation}
-import com.evojam.mongodb.client.model.options.{IndexOptions, FindOptions}
+import com.evojam.mongodb.client.model.WriteOperation
+import com.evojam.mongodb.client.model.operation.CountOperation
+import com.evojam.mongodb.client.model.operation.CreateIndexesOperation
+import com.evojam.mongodb.client.model.options.FindOptions
+import com.evojam.mongodb.client.model.options.IndexOptions
 import com.evojam.mongodb.client.util.BsonUtil
 
 case class MongoCollection[TDoc <: Any : Manifest](//scalastyle:ignore
@@ -42,7 +50,9 @@ case class MongoCollection[TDoc <: Any : Manifest](//scalastyle:ignore
   require(writeConcern != null, "writeConcern cannot be null")
   require(executor != null, "executor cannot be null")
 
-  implicit val documentClass = manifest[TDoc].runtimeClass
+  implicit val documentClass = manifest[TDoc].runtimeClass.asInstanceOf[Class[TDoc]]
+
+  private val codec = codecRegistry.get(documentClass)
 
   def withCodecRegistry(codecRegistry: CodecRegistry): MongoCollection[TDoc] =
     this.copy(codecRegistry = codecRegistry)
@@ -82,11 +92,18 @@ case class MongoCollection[TDoc <: Any : Manifest](//scalastyle:ignore
   // TODO: MapReduce
   // TODO: Bulk write/read
 
-  def insertOne(document: TDoc): Future[Unit] = ???
+  def insertOne(document: TDoc): Future[Unit] =
+    executeSingleWriteRequest(new InsertRequest(addIdIfAbsent(document)))
 
-  def insertMany(documents: Iterable[TDoc]): Future[Unit] = ???
-
-  def insertMany(documents: Iterable[TDoc], options: InsertManyOptions): Future[Unit] = ???
+  def insertMany(
+    documents: List[TDoc],
+    options: InsertManyOptions = new InsertManyOptions): Future[Unit] =
+    executor.executeAsync(
+      WriteOperation(
+        namespace,
+        documents.map(doc => new InsertRequest(addIdIfAbsent(doc))),
+        options.isOrdered,
+        writeConcern)).toList.toBlocking.toFuture.map(_ => ())
 
   def deleteOne(filter: Bson): Future[DeleteResult] = ???
 
@@ -126,12 +143,10 @@ case class MongoCollection[TDoc <: Any : Manifest](//scalastyle:ignore
   def createIndex(key: Bson, options: IndexOptions): Future[Unit] =
     createIndexes(List(IndexModel(key, options)))
 
-  def createIndexes(indexes: List[IndexModel]): Future[Unit] = {
-      import scala.collection.JavaConversions._
+  def createIndexes(indexes: List[IndexModel]): Future[Unit] =
       executor.executeAsync(CreateIndexesOperation(namespace, buildIndexRequests(indexes)))
         .toBlocking.toFuture
         .map(_ => ())
-    }
 
   def listIndexes[TRes <: Any : Manifest](): ListIndexesIterable[TDoc, TRes] =
     ListIndexesIterable[TDoc, TRes](namespace, readPreference, codecRegistry, executor = executor)
@@ -146,4 +161,17 @@ case class MongoCollection[TDoc <: Any : Manifest](//scalastyle:ignore
 
   def renameCollection(newCollectionNamespace: MongoNamespace, options: RenameCollectionOptions): Future[Unit] = ???
 
+  private def executeSingleWriteRequest(request: WriteRequest): Future[Unit] =
+    executor.executeAsync(WriteOperation(namespace, List(request), true, writeConcern))
+      .toList.toBlocking.toFuture.map(_ => ())
+
+  private implicit def documentToBsonDocument(doc: TDoc): BsonDocument =
+    BsonDocumentWrapper.asBsonDocument(doc, codecRegistry)
+
+  private def addIdIfAbsent(doc: TDoc) = codec match {
+    case collCodec: CollectibleCodec[TDoc] =>
+      collCodec.generateIdIfAbsentFromDocument(doc)
+      doc
+    case _ => doc
+  }
 }
