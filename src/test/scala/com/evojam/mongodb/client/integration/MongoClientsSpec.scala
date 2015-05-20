@@ -20,22 +20,5 @@ class MongoClientsSpec extends Specification {
 
       db.listCollectionNames must not be empty.await(10)
     }
-
-    "count on collections" in {
-      val db = MongoClients.create.getDatabase("local")
-      val coll = db.collection("startup_log")
-
-      coll.count must beGreaterThan(0L).await(10)
-    }
-
-    "find on collections" in {
-      val docs = MongoClients.create.getDatabase("local")
-        .collection("startup_log")
-        .find[Document]
-        .collect
-
-      docs must not be empty.await(10)
-    }
-
   }
 }
