@@ -27,6 +27,14 @@ case class FindOptions(
 }
 
 object FindOptions {
+  def apply(): FindOptions = {
+    val opts = new MongoFindOptions()
+    FindOptions(opts.getBatchSize, opts.getLimit, opts.getModifiers,
+        opts.getProjection, opts.getSkip, opts.getSort, opts.isNoCursorTimeout,
+        opts.isOplogReplay, opts.isPartial, opts.getMaxTime(TimeUnit.MILLISECONDS),
+        TimeUnit.MILLISECONDS, opts.getCursorType)
+  }
+
   implicit def findOptions2Mongo(opt: FindOptions) = {
     val mongoOpt = new MongoFindOptions
     mongoOpt.batchSize(opt.batchSize)

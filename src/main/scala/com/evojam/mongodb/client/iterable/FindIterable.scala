@@ -1,12 +1,14 @@
 package com.evojam.mongodb.client.iterable
 
-import com.evojam.mongodb.client.ObservableOperationExecutor
-import com.evojam.mongodb.client.model.{ FindOperation, FindOptions }
-import com.mongodb.{ MongoNamespace, ReadPreference }
+import java.util.concurrent.TimeUnit
+
+import com.mongodb.{ CursorType, MongoNamespace, ReadPreference }
 import org.bson.BsonDocument
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
 
+import com.evojam.mongodb.client.ObservableOperationExecutor
+import com.evojam.mongodb.client.model.{ FindOperation, FindOptions }
 
 case class FindIterable[TDoc <: Any : Manifest, TRes <: Any : Manifest](// scalastyle:ignore
   filter: Bson,
@@ -24,7 +26,7 @@ case class FindIterable[TDoc <: Any : Manifest, TRes <: Any : Manifest](// scala
   require(executor != null, "executor cannt be null")
 
   private val documentClass = manifest[TDoc].runtimeClass
-  private val resultClass = manifest[TRes]
+  private val resultClass = manifest[TRes].runtimeClass
 
   override def head =
     execute(queryOperation.copy(batchSize = 0, limit = -1)).head
@@ -73,4 +75,52 @@ case class FindIterable[TDoc <: Any : Manifest, TRes <: Any : Manifest](// scala
     }
 
   override def collect() = execute.collect()
+
+  def filter(filter: Bson) =
+    FindIterable[TDoc, TRes](filter, findOptions, namespace,
+      readPreference, codecRegistry, executor)
+
+  def limit(limit: Int) =
+    FindIterable[TDoc, TRes](filter, findOptions.copy(limit = limit),
+      namespace, readPreference, codecRegistry, executor)
+
+  def skip(skip: Int) =
+    FindIterable[TDoc, TRes](filter, findOptions.copy(skip = skip),
+      namespace, readPreference, codecRegistry, executor)
+
+  def maxTime(maxTime: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS) =
+    FindIterable[TDoc, TRes](filter, findOptions.copy(maxTime = maxTime, maxTimeUnit = timeUnit),
+      namespace, readPreference, codecRegistry, executor)
+
+  def modifiers(modifiers: Bson) =
+    FindIterable[TDoc, TRes](filter, findOptions.copy(modifiers = modifiers),
+      namespace, readPreference, codecRegistry, executor)
+
+  def projection(projection: Bson) =
+    FindIterable[TDoc, TRes](filter, findOptions.copy(projection = projection),
+      namespace, readPreference, codecRegistry, executor)
+
+  def sort(sort: Bson) =
+    FindIterable[TDoc, TRes](filter, findOptions.copy(sort = sort),
+      namespace, readPreference, codecRegistry, executor)
+
+  def noCursorTimeout(noCursorTimeout: Boolean) =
+    FindIterable[TDoc, TRes](filter, findOptions.copy(noCursorTimeout = noCursorTimeout),
+      namespace, readPreference, codecRegistry, executor)
+
+  def oplogRelay(oplogRelay: Boolean) =
+    FindIterable[TDoc, TRes](filter, findOptions.copy(oplogRelay = oplogRelay),
+      namespace, readPreference, codecRegistry, executor)
+
+  def partial(partial: Boolean) =
+    FindIterable[TDoc, TRes](filter, findOptions.copy(partial = partial),
+      namespace, readPreference, codecRegistry, executor)
+
+  def cursorType(cursorType: CursorType) =
+    FindIterable[TDoc, TRes](filter, findOptions.copy(cursorType = cursorType),
+      namespace, readPreference, codecRegistry, executor)
+
+  def batchSize(batchSize: Int) =
+    FindIterable[TDoc, TRes](filter, findOptions.copy(batchSize = batchSize),
+      namespace, readPreference, codecRegistry, executor)
 }
