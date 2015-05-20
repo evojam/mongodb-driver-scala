@@ -9,8 +9,10 @@ import com.mongodb.MongoNamespace
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
 import com.mongodb.bulk.IndexRequest
+import com.mongodb.bulk.BulkWriteResult
 import com.mongodb.bulk.DeleteRequest
 import com.mongodb.bulk.InsertRequest
+import com.mongodb.bulk.UpdateRequest
 import com.mongodb.bulk.WriteRequest
 import com.mongodb.client.model.CountOptions
 import com.mongodb.client.model.FindOneAndDeleteOptions
@@ -19,6 +21,7 @@ import com.mongodb.client.model.FindOneAndUpdateOptions
 import com.mongodb.client.model.InsertManyOptions
 import com.mongodb.client.model.RenameCollectionOptions
 import com.mongodb.client.model.UpdateOptions
+import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
 import org.bson.BsonDocument
 import org.bson.BsonDocumentWrapper
@@ -37,6 +40,7 @@ import com.evojam.mongodb.client.model.operation.CreateIndexesOperation
 import com.evojam.mongodb.client.model.options.FindOptions
 import com.evojam.mongodb.client.model.options.IndexOptions
 import com.evojam.mongodb.client.util.BsonUtil
+import com.evojam.mongodb.client.util.Conversions._
 
 case class MongoCollection[TDoc <: Any : Manifest](//scalastyle:ignore
   namespace: MongoNamespace,
@@ -94,7 +98,7 @@ case class MongoCollection[TDoc <: Any : Manifest](//scalastyle:ignore
   // TODO: Bulk write/read
 
   def insertOne(document: TDoc): Future[Unit] =
-    executeSingleWriteRequest(new InsertRequest(addIdIfAbsent(document)))
+    executeWrite(new InsertRequest(addIdIfAbsent(document)))(_ => ())
 
   def insertMany(
     documents: List[TDoc],
@@ -113,18 +117,27 @@ case class MongoCollection[TDoc <: Any : Manifest](//scalastyle:ignore
   def deleteAll() = delete(new Document(), true)
 
   // TODO: should return Future[DeleteResult]
-  def delete(filter: Bson, multi: Boolean): Future[Unit] =
-    executeSingleWriteRequest(new DeleteRequest(filter))
+  def delete(filter: Bson, multi: Boolean): Future[DeleteResult] =
+    executeWrite[DeleteResult](new DeleteRequest(filter))
 
   def replaceOne(filter: Bson, replacement: TDoc): Future[UpdateResult] = ???
 
   def replaceOne(filter: Bson, replacement: TDoc, options: UpdateOptions): Future[UpdateResult] = ???
 
-  def updateOne(filter: Bson, update: Bson): Future[UpdateResult] = ???
+  def updateOne(
+    filterBson: Bson,
+    updateBson: Bson,
+    options: UpdateOptions = new UpdateOptions) =
+    update(filterBson, updateBson, options, false)
 
-  def updateOne(filter: Bson, update: Bson, options: UpdateOptions): Future[UpdateResult] = ???
+  def updateMany(filterBson: Bson, updateBson: Bson, options: UpdateOptions) =
+    update(filterBson, updateBson, options, true)
 
-  def updateMany(filter: Bson, update: Bson, options: UpdateOptions): Future[UpdateResult] = ???
+  def update(filterBson: Bson, updateBson: Bson, options: UpdateOptions, multi: Boolean): Future[UpdateResult] =
+    executeWrite[UpdateResult](
+      new UpdateRequest(filterBson, updateBson, WriteRequest.Type.UPDATE)
+        .upsert(options.isUpsert)
+        .multi(multi))
 
   def findOneAndDelete(filter: Bson): Future[TDoc] = ???
 
@@ -168,9 +181,13 @@ case class MongoCollection[TDoc <: Any : Manifest](//scalastyle:ignore
 
   def renameCollection(newCollectionNamespace: MongoNamespace, options: RenameCollectionOptions): Future[Unit] = ???
 
-  private def executeSingleWriteRequest(request: WriteRequest): Future[Unit] =
-    executor.executeAsync(WriteOperation(namespace, List(request), true, writeConcern))
-      .toList.toBlocking.toFuture.map(_ => ())
+  private def executeWrite[T](request: WriteRequest)(implicit f: BulkWriteResult => T) =
+    executeSingleWriteRequest(request).map(f)
+
+  private def executeSingleWriteRequest(request: WriteRequest): Future[BulkWriteResult] =
+    executor.executeAsync[BulkWriteResult](
+      WriteOperation(namespace, List(request), true, writeConcern))
+      .toBlocking.toFuture
 
   private implicit def documentToBsonDocument(doc: TDoc): BsonDocument =
     BsonDocumentWrapper.asBsonDocument(doc, codecRegistry)
