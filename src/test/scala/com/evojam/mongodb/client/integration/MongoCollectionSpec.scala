@@ -34,8 +34,14 @@ class MongoCollectionSpec extends Specification {
       docs.collect must haveSize[List[Document]](1).await(10)
     }
 
-    "list indexes" in {
-      collection.listIndexes.collect must not be empty.await(10)
+    "create and list indexes" in {
+      val collection =
+        MongoClients.create.getDatabase("foo")
+          .collection("bar")
+
+      collection.createIndex(new Document("testIndex", 1))
+
+      collection.listIndexes().collect must not be empty.await(10)
     }
   }
 
