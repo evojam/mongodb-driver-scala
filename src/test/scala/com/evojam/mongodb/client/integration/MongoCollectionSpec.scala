@@ -15,12 +15,12 @@ class MongoCollectionSpec extends Specification {
         .collection("startup_log")
 
     "count on collections" in {
-      collection.count must beGreaterThan(0L).await(10)
+      collection.count() must beGreaterThan(0L).await(10)
     }
 
     "find on collections" in {
       val docs = collection
-        .find[Document]()
+        .find()
         .collect
 
       docs must not be empty.await(10)
@@ -28,7 +28,7 @@ class MongoCollectionSpec extends Specification {
 
     "limit find to single result" in {
       val docs = collection
-        .find[Document]()
+        .find()
         .limit(1)
 
       docs.collect must haveSize[List[Document]](1).await(10)
@@ -51,13 +51,13 @@ class MongoCollectionSpec extends Specification {
         .collection("acollection")
 
     "insert and then delete document from collection" in {
-      val insertRes = collection.insertOne(new Document())
-        .flatMap(_ => collection.find[Document]().collect)
+      val insertRes = collection.insert(new Document())
+        .flatMap(_ => collection.find().collect)
 
       insertRes must not be empty.await(10)
 
-      val deleteRes = collection.deleteAll
-        .flatMap(_ => collection.find[Document]().collect)
+      val deleteRes = collection.delete(multi = true)
+        .flatMap(_ => collection.find().collect)
 
       deleteRes must haveSize[List[Document]](0).await(10)
     }

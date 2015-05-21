@@ -1,6 +1,6 @@
 package com.evojam.mongodb.client
 
-import scala.collection.JavaConversions.seqAsJavaList
+import scala.collection.JavaConversions._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.language.implicitConversions
@@ -61,28 +61,27 @@ case class MongoCollection[TDoc <: Any : Manifest](//scalastyle:ignore
   def withWriteConcern(writeConcern: WriteConcern): MongoCollection[TDoc] =
     this.copy(writeConcern = writeConcern)
 
-  def count(): Future[Long] =
-    count(None, new CountOptions())
-
-  def count(filter: Bson): Future[Long] =
-    count(Some(filter), new CountOptions())
-
-  def count(filter: Option[Bson], options: CountOptions): Future[Long] =
+  def count(
+    filter: Bson = new BsonDocument(),
+    options: CountOptions = new CountOptions()): Future[Long] =
     executor.executeAsync(
       CountOperation(
         namespace,
-        filter.map(BsonUtil.toBsonDocument).getOrElse(new BsonDocument),
+        BsonUtil.toBsonDocument(filter),
         options),
       readPreference).toBlocking.toFuture.map(_.longValue)
 
-  def find[TRes <: Any : Manifest](
-    filter: Bson = new BsonDocument()): FindIterable[TDoc, TRes] =
+  def find(filter: Bson = new BsonDocument()) =
+    find[Document](filter)
+
+  def find[TRes <: Any : Manifest](filter: Bson): FindIterable[TDoc, TRes] =
     FindIterable[TDoc, TRes](filter, FindOptions(), namespace,
       readPreference, codecRegistry, executor)
 
-  def distinct[TRes <: Any : Manifest](
-    fieldName: String,
-    filter: Bson = new BsonDocument): DistinctIterable[TDoc, TRes] =
+  def distinct(fieldName: String, filter: Bson = new BsonDocument()) =
+    distinct[Document](fieldName, filter)
+
+  def distinct[TRes <: Any : Manifest](fieldName: String, filter: Bson): DistinctIterable[TDoc, TRes] =
     DistinctIterable[TDoc, TRes](fieldName, filter, namespace,
       readPreference, codecRegistry, executor)
 
@@ -90,10 +89,10 @@ case class MongoCollection[TDoc <: Any : Manifest](//scalastyle:ignore
   // TODO: MapReduce
   // TODO: Bulk write/read
 
-  def insertOne(document: TDoc): Future[Unit] =
+  def insert(document: TDoc): Future[Unit] =
     executeWrite(new InsertRequest(addIdIfAbsent(document)))(_ => ())
 
-  def insertMany(
+  def insert(
     documents: List[TDoc],
     options: InsertManyOptions = new InsertManyOptions): Future[Unit] =
     executor.executeAsync(
@@ -103,46 +102,20 @@ case class MongoCollection[TDoc <: Any : Manifest](//scalastyle:ignore
         options.isOrdered,
         writeConcern)).toList.toBlocking.toFuture.map(_ => ())
 
-  def deleteOne(filter: Bson) = delete(filter, false)
-
-  def deleteMany(filter: Bson) = delete(filter, true)
-
-  def deleteAll() = delete(new Document(), true)
-
-  // TODO: should return Future[DeleteResult]
-  def delete(filter: Bson, multi: Boolean): Future[DeleteResult] =
+  def delete(
+    filter: Bson = new Document(),
+    multi: Boolean = false): Future[DeleteResult] =
     executeWrite[DeleteResult](new DeleteRequest(filter))
 
-  def replaceOne(filter: Bson, replacement: TDoc): Future[UpdateResult] = ???
-
-  def replaceOne(filter: Bson, replacement: TDoc, options: UpdateOptions): Future[UpdateResult] = ???
-
-  def updateOne(
+  def update(
     filterBson: Bson,
     updateBson: Bson,
-    options: UpdateOptions = new UpdateOptions) =
-    update(filterBson, updateBson, options, false)
-
-  def updateMany(filterBson: Bson, updateBson: Bson, options: UpdateOptions) =
-    update(filterBson, updateBson, options, true)
-
-  def update(filterBson: Bson, updateBson: Bson, options: UpdateOptions, multi: Boolean): Future[UpdateResult] =
+    options: UpdateOptions = new UpdateOptions(),
+    multi: Boolean = false): Future[UpdateResult] =
     executeWrite[UpdateResult](
       new UpdateRequest(filterBson, updateBson, WriteRequest.Type.UPDATE)
         .upsert(options.isUpsert)
         .multi(multi))
-
-  def findOneAndDelete(filter: Bson): Future[TDoc] = ???
-
-  def findOneAndDelete(filter: Bson, options: FindOneAndDeleteOptions): Future[TDoc] = ???
-
-  def findOneAndReplace(filter: Bson, replacement: TDoc): Future[TDoc] = ???
-
-  def findOneAndReplace(filter: Bson, replacement: TDoc, options: FindOneAndReplaceOptions): Future[TDoc] = ???
-
-  def findOneAndUpdate(filter: Bson, update: Bson): Future[TDoc] = ???
-
-  def findOneAndUpdate(filter: Bson, update: Bson, options: FindOneAndUpdateOptions): Future[TDoc] = ???
 
   def drop(): Future[Unit] = ???
 
