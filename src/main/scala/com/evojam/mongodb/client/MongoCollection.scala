@@ -14,13 +14,7 @@ import com.mongodb.bulk.DeleteRequest
 import com.mongodb.bulk.InsertRequest
 import com.mongodb.bulk.UpdateRequest
 import com.mongodb.bulk.WriteRequest
-import com.mongodb.client.model.CountOptions
-import com.mongodb.client.model.FindOneAndDeleteOptions
-import com.mongodb.client.model.FindOneAndReplaceOptions
-import com.mongodb.client.model.FindOneAndUpdateOptions
-import com.mongodb.client.model.InsertManyOptions
-import com.mongodb.client.model.RenameCollectionOptions
-import com.mongodb.client.model.UpdateOptions
+import com.mongodb.client.model._
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
 import org.bson.BsonDocument
@@ -38,7 +32,6 @@ import com.evojam.mongodb.client.model.WriteOperation
 import com.evojam.mongodb.client.model.operation.CountOperation
 import com.evojam.mongodb.client.model.operation.CreateIndexesOperation
 import com.evojam.mongodb.client.model.options.FindOptions
-import com.evojam.mongodb.client.model.options.IndexOptions
 import com.evojam.mongodb.client.util.BsonUtil
 import com.evojam.mongodb.client.util.Conversions._
 
@@ -158,7 +151,7 @@ case class MongoCollection[TDoc <: Any : Manifest](//scalastyle:ignore
       (model, requests) => requests :+ model.asIndexRequest())
 
   def createIndex(key: Bson): Future[Unit] =
-    createIndex(key, IndexOptions())
+    createIndex(key, new IndexOptions())
 
   def createIndex(key: Bson, options: IndexOptions): Future[Unit] =
     createIndexes(List(IndexModel(key, options)))
