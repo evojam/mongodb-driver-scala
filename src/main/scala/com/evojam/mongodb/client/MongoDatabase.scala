@@ -55,7 +55,7 @@ class MongoDatabase(
     getCollection[Document](collectionName)
 
   def getCollection[T <: Any : Manifest](collectionName: String): MongoCollection[T] =
-    MongoCollection[T](
+    MongoCollectionImpl[T](
       new MongoNamespace(name, collectionName),
       codec,
       readPref,

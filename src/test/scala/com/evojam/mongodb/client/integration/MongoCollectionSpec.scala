@@ -41,7 +41,7 @@ class MongoCollectionSpec extends Specification {
 
       collection.createIndex(new Document("testIndex", 1))
 
-      collection.listIndexes().collect must not be empty.await(10)
+      collection.listIndexes.collect must not be empty.await(10)
     }
   }
 
