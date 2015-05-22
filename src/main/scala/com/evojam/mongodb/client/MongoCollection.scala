@@ -8,15 +8,22 @@ import scala.language.implicitConversions
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
-import com.mongodb.bulk.IndexRequest
 import com.mongodb.bulk.BulkWriteResult
 import com.mongodb.bulk.DeleteRequest
+import com.mongodb.bulk.IndexRequest
 import com.mongodb.bulk.InsertRequest
 import com.mongodb.bulk.UpdateRequest
 import com.mongodb.bulk.WriteRequest
-import com.mongodb.client.model._
+import com.mongodb.client.model.CountOptions
+import com.mongodb.client.model.IndexOptions
+import com.mongodb.client.model.InsertManyOptions
+import com.mongodb.client.model.RenameCollectionOptions
+import com.mongodb.client.model.UpdateOptions
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
+import com.mongodb.operation.DropCollectionOperation
+import com.mongodb.operation.RenameCollectionOperation
+
 import org.bson.BsonDocument
 import org.bson.BsonDocumentWrapper
 import org.bson.Document
@@ -117,7 +124,9 @@ case class MongoCollection[TDoc <: Any : Manifest](//scalastyle:ignore
         .upsert(options.isUpsert)
         .multi(multi))
 
-  def drop(): Future[Unit] = ???
+  def drop(): Future[Unit] =
+    executor.executeAsync(new DropCollectionOperation(namespace))
+      .toBlocking.toFuture.map(_ => ())
 
   private def buildIndexRequests(indexes: List[IndexModel]) =
     indexes.foldRight(List.empty[IndexRequest])(
@@ -143,9 +152,12 @@ case class MongoCollection[TDoc <: Any : Manifest](//scalastyle:ignore
 
   def dropIndexes(): Future[Unit] = ???
 
-  def renameCollection(newCollectionNamespace: MongoNamespace): Future[Unit] = ???
-
-  def renameCollection(newCollectionNamespace: MongoNamespace, options: RenameCollectionOptions): Future[Unit] = ???
+  def renameCollection(
+    newCollectionNamespace: MongoNamespace,
+    options: RenameCollectionOptions =  new RenameCollectionOptions()): Future[Unit] =
+    executor.executeAsync(new RenameCollectionOperation(namespace, newCollectionNamespace)
+      .dropTarget(options.isDropTarget))
+      .toBlocking.toFuture.map(_ => ())
 
   private def executeWrite[T](request: WriteRequest)(implicit f: BulkWriteResult => T) =
     executeSingleWriteRequest(request).map(f)
