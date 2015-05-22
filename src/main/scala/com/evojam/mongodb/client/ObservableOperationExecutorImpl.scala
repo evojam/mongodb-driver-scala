@@ -13,7 +13,7 @@ class ObservableOperationExecutorImpl(cluster: Cluster) extends ObservableOperat
     new SingleResultCallback[T] {
       override def onResult(result: T, error: Throwable) = {
         if(error == null) {
-          Option(result).foreach(subscriber.onNext)
+          subscriber.onNext(result)
           subscriber.onCompleted()
         } else {
           require(result == null, "result cannot be not null")
