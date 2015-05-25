@@ -76,16 +76,16 @@ case class MongoCollectionImpl[TDoc <: Any : Manifest](//scalastyle:ignore
       readPreference).toBlocking.toFuture.map(_.longValue)
 
   override def find(filter: Bson) =
-    find[Document](filter)
+    findOfType[Document](filter)
 
-  override def find[TRes <: Any : Manifest](filter: Bson) =
+  override def findOfType[TRes <: Any : Manifest](filter: Bson) =
     FindIterable[TDoc, TRes](filter, FindOptions(), namespace,
       readPreference, codecRegistry, executor)
 
   override def distinct(fieldName: String, filter: Bson) =
-    distinct[Document](fieldName, filter)
+    distinctOfType[Document](fieldName, filter)
 
-  override def distinct[TRes <: Any : Manifest](fieldName: String, filter: Bson) =
+  override def distinctOfType[TRes <: Any : Manifest](fieldName: String, filter: Bson) =
     DistinctIterable[TDoc, TRes](fieldName, filter, namespace,
       readPreference, codecRegistry, executor)
 
@@ -130,9 +130,9 @@ case class MongoCollectionImpl[TDoc <: Any : Manifest](//scalastyle:ignore
         .map(_ => ())
 
   override def listIndexes =
-    listIndexes[Document]()
+    listIndexesOfType[Document]()
 
-  override def listIndexes[TRes <: Any : Manifest]() =
+  override def listIndexesOfType[TRes <: Any : Manifest]() =
     ListIndexesIterable[TDoc, TRes](namespace, readPreference, codecRegistry, executor = executor)
 
   override def dropIndex(indexName: String) = ???

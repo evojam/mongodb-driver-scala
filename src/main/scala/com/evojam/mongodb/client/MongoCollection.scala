@@ -33,17 +33,17 @@ trait MongoCollection[TDoc] { // scalastyle:ignore
       filter: Bson = new BsonDocument(),
       options: CountOptions = new CountOptions()): Future[Long]
 
-  def find(filter: Bson = new BsonDocument): FindIterable[TDoc, Document]
+  def find(filter: Bson = new BsonDocument()): FindIterable[TDoc, Document]
 
-  def find[TRes <: Any : Manifest](filter: Bson): FindIterable[TDoc, TRes]
+  def findOfType[TRes <: Any : Manifest](filter: Bson = new BsonDocument): FindIterable[TDoc, TRes]
 
   def distinct(
     fieldName: String,
     filter: Bson = new BsonDocument()): DistinctIterable[TDoc, Document]
 
-  def distinct[TRes <: Any : Manifest](
+  def distinctOfType[TRes <: Any : Manifest](
     fieldName: String,
-    filter: Bson): DistinctIterable[TDoc, TRes]
+    filter: Bson = new BsonDocument()): DistinctIterable[TDoc, TRes]
 
   def insert(document: TDoc): Future[Unit]
 
@@ -69,9 +69,9 @@ trait MongoCollection[TDoc] { // scalastyle:ignore
 
   def createIndexes(indexes: List[IndexModel]): Future[Unit]
 
-  def listIndexes: ListIndexesIterable[TDoc, Document]
+  def listIndexes(): ListIndexesIterable[TDoc, Document]
 
-  def listIndexes[TRes <: Any : Manifest](): ListIndexesIterable[TDoc, TRes]
+  def listIndexesOfType[TRes <: Any : Manifest](): ListIndexesIterable[TDoc, TRes]
 
   def dropIndex(indexName: String): Future[Unit]
 
