@@ -9,6 +9,13 @@ import com.mongodb.management.JMXConnectionPoolListener
 
 object MongoClients {
 
+  def buildSettings(connectionString: ConnectionString) = MongoClientSettings()
+    .clusterSettings(ClusterSettings.builder.applyConnectionString(connectionString).build)
+    .connectionPoolSettings(ConnectionPoolSettings.builder.applyConnectionString(connectionString).build)
+    .credentialList(connectionString.getCredentialList.toList)
+    .sslSettings(SslSettings.builder.applyConnectionString(connectionString).build)
+    .socketSettings(SocketSettings.builder.applyConnectionString(connectionString).build)
+
   def create: MongoClient = create(new ConnectionString("mongodb://localhost"))
 
   def create(settings: MongoClientSettings): MongoClient =
@@ -16,13 +23,7 @@ object MongoClients {
 
   def create(connectionString: String): MongoClient = create(new ConnectionString(connectionString))
 
-  def create(connectionString: ConnectionString): MongoClient = create(
-    MongoClientSettings()
-      .clusterSettings(ClusterSettings.builder.applyConnectionString(connectionString).build)
-      .connectionPoolSettings(ConnectionPoolSettings.builder.applyConnectionString(connectionString).build)
-      .credentialList(connectionString.getCredentialList.toList)
-      .sslSettings(SslSettings.builder.applyConnectionString(connectionString).build)
-      .socketSettings(SocketSettings.builder.applyConnectionString(connectionString).build))
+  def create(connectionString: ConnectionString): MongoClient = create(buildSettings(connectionString))
 
   private def createCluster(settings: MongoClientSettings, streamFactory: StreamFactory): Cluster =
     new DefaultClusterFactory().create(settings.clusterSettings, settings.serverSettings, settings
