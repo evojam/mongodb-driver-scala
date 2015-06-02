@@ -6,19 +6,22 @@ import scala.language.implicitConversions
 
 import com.mongodb.operation.{FindOperation => MongoFindOperation}
 import com.mongodb.{CursorType, MongoNamespace}
-import org.bson.BsonDocument
+import org.bson.codecs.Codec
 import org.bson.codecs.Decoder
+import org.bson.codecs.Encoder
 
-case class FindOperation[T](
+import com.evojam.mongodb.client.util.BsonUtil
+
+case class FindOperation[T, R](
   namespace: MongoNamespace,
-  decoder: Decoder[T],
-  filter: BsonDocument,
+  decoder: Decoder[R],
+  filter: Option[T],
   batchSize: Int,
   limit: Int,
-  modifiers: BsonDocument,
-  projection: BsonDocument,
+  modifiers: Option[T],
+  projection: Option[T],
   skip: Int,
-  sort: BsonDocument,
+  sort: Option[T],
   slaveOk: Boolean,
   oplogRelay: Boolean,
   noCursorTimeout: Boolean,
@@ -32,15 +35,15 @@ case class FindOperation[T](
 }
 
 object FindOperation {
-  implicit def findOperation2Mongo[T](fo: FindOperation[T]) =
+  implicit def findOperation2Mongo[T: Encoder, R](fo: FindOperation[T, R]) =
     new MongoFindOperation(fo.namespace, fo.decoder)
-      .filter(fo.filter)
+      .filter(BsonUtil.toBson(fo.filter))
       .batchSize(fo.batchSize)
       .limit(fo.limit)
-      .modifiers(fo.modifiers)
-      .projection(fo.projection)
+      .modifiers(BsonUtil.toBson(fo.modifiers))
+      .projection(BsonUtil.toBson(fo.projection))
       .skip(fo.skip)
-      .sort(fo.sort)
+      .sort(BsonUtil.toBson(fo.sort))
       .slaveOk(fo.slaveOk)
       .oplogReplay(fo.oplogRelay)
       .noCursorTimeout(fo.noCursorTimeout)

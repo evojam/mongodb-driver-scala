@@ -1,39 +1,37 @@
 package com.evojam.mongodb.client.iterable
 
-import java.util.concurrent.TimeUnit._
+import java.util.concurrent.TimeUnit.MILLISECONDS
 
 import scala.concurrent.duration.TimeUnit
 
-import com.evojam.mongodb.client.ObservableOperationExecutor
 import com.mongodb.ReadPreference
 import com.mongodb.operation.ListDatabasesOperation
+import org.bson.codecs.Codec
 import org.bson.codecs.configuration.CodecRegistry
 
-trait ListDatabasesIterable[T] extends MongoIterable[T] {
-  def maxTime(maxTime: Long, timeUnit: TimeUnit): ListDatabasesIterable[T]
-}
+import com.evojam.mongodb.client.ObservableOperationExecutor
 
-case class ListDatabasesIterableImpl[T](resultClass: Class[T], codecRegistry: CodecRegistry,
-  readPreference: ReadPreference, executor: ObservableOperationExecutor,
-  maxTimeMS: Long = 0) extends ListDatabasesIterable[T] {
+case class ListDatabasesIterable(
+  codecRegistry: CodecRegistry,
+  readPreference: ReadPreference,
+  executor: ObservableOperationExecutor,
+  maxTimeMS: Long = 0) extends MongoIterable {
 
-  def maxTime(maxTime: Long, timeUnit: TimeUnit): ListDatabasesIterable[T] =
-    this.copy[T](maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit))
+  def maxTime(maxTime: Long, timeUnit: TimeUnit): ListDatabasesIterable =
+    this.copy(maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit))
 
-  private def createOperation: ListDatabasesOperation[T] =
-    new ListDatabasesOperation[T](codecRegistry.get(resultClass)).maxTime(maxTimeMS, MILLISECONDS)
+  private def createOperation[T]()(implicit c: Codec[T]): ListDatabasesOperation[T] =
+    new ListDatabasesOperation[T](c).maxTime(maxTimeMS, MILLISECONDS)
 
-  lazy val executedOperation = OperationIterable(createOperation, readPreference, executor)
+  def executedOperation[T: Codec] = OperationIterable(createOperation, readPreference, executor)
 
-  override def cursor(batchSize: Option[Int]) = executedOperation.cursor(batchSize)
+  override def cursor[T: Codec](batchSize: Option[Int]) = executedOperation.cursor(batchSize)
 
-  override def headOpt = executedOperation.headOpt
+  override def headOpt[T: Codec] = executedOperation.headOpt
 
-  override def foreach(f: (T) => Unit) = executedOperation.foreach(f)
+  override def foreach[T: Codec](f: T => Unit) = executedOperation.foreach(f)
 
-  override def map[U](f: (T) => U) = executedOperation.map(f)
+  override def head[T: Codec] = executedOperation.head
 
-  override def head = executedOperation.head
-
-  override def collect() = executedOperation.collect()
+  override def collect[T: Codec]() = executedOperation.collect()
 }

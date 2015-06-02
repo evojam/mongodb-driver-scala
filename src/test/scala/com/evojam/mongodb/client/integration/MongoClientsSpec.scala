@@ -12,7 +12,7 @@ class MongoClientsSpec extends Specification {
     }
 
     "list databases" in {
-      MongoClients.create.listDatabaseNames() must not be empty.await(10)
+      MongoClients.create.databaseNames() must not be empty.await(10)
     }
 
     "list collections" in {

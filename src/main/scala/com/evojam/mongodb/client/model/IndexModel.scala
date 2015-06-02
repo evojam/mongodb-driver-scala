@@ -4,18 +4,16 @@ import java.util.concurrent.TimeUnit
 
 import com.mongodb.bulk.IndexRequest
 import com.mongodb.client.model.IndexOptions
-
-import org.bson.codecs.configuration.CodecRegistry
-import org.bson.conversions.Bson
+import org.bson.codecs.Codec
 
 import com.evojam.mongodb.client.util.BsonUtil
 
-case class IndexModel(keys: Bson, options: IndexOptions) {
+case class IndexModel[T](keys: T, options: IndexOptions) {
   require(keys != null, "keys cannot be null")
   require(options != null, "options cannot be null")
 
-  def asIndexRequest()(implicit documentClass: Class[_], codecRegistry: CodecRegistry) =
-    new IndexRequest(BsonUtil.toBsonDocument(keys))
+  def asIndexRequest()(implicit e: Codec[T]) =
+    new IndexRequest(BsonUtil.toBson(keys))
       .name(options.getName)
       .background(options.isBackground)
       .unique(options.isUnique)

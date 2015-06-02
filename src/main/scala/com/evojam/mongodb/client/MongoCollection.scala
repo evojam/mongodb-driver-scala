@@ -12,9 +12,7 @@ import com.mongodb.client.model.RenameCollectionOptions
 import com.mongodb.client.model.UpdateOptions
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
-import org.bson.BsonDocument
-import org.bson.Document
-import org.bson.codecs.configuration.CodecRegistry
+import org.bson.codecs.Codec
 import org.bson.conversions.Bson
 
 import com.evojam.mongodb.client.iterable.DistinctIterable
@@ -22,56 +20,38 @@ import com.evojam.mongodb.client.iterable.FindIterable
 import com.evojam.mongodb.client.iterable.ListIndexesIterable
 import com.evojam.mongodb.client.model.IndexModel
 
-trait MongoCollection[TDoc] { // scalastyle:ignore
-  def withCodecRegistry(codecRegistry: CodecRegistry): MongoCollection[TDoc]
+trait MongoCollection {
+  def withReadPreference(readPreference: ReadPreference): MongoCollection
 
-  def withReadPreference(readPreference: ReadPreference): MongoCollection[TDoc]
+  def withWriteConcern(writeConcern: WriteConcern): MongoCollection
 
-  def withWriteConcern(writeConcern: WriteConcern): MongoCollection[TDoc]
+  def count[T: Codec](filter: T, options: CountOptions = new CountOptions()): Future[Long]
 
-  def count(
-      filter: Bson = new BsonDocument(),
-      options: CountOptions = new CountOptions()): Future[Long]
+  def find[T: Codec](filter: T): FindIterable[T]
 
-  def find(filter: Bson = new BsonDocument()): FindIterable[TDoc, Document]
+  def distinct[T: Codec](fieldName: String, filter: T): DistinctIterable[T]
 
-  def findOfType[TRes <: Any : Manifest](filter: Bson = new BsonDocument): FindIterable[TDoc, TRes]
+  def insert[T: Codec](document: T): Future[Unit]
 
-  def distinct(
-    fieldName: String,
-    filter: Bson = new BsonDocument()): DistinctIterable[TDoc, Document]
+  def insert[T: Codec](documents: List[T], options: InsertManyOptions = new InsertManyOptions()): Future[Unit]
 
-  def distinctOfType[TRes <: Any : Manifest](
-    fieldName: String,
-    filter: Bson = new BsonDocument()): DistinctIterable[TDoc, TRes]
+  def delete[T: Codec](filter: T, multi: Boolean = false): Future[DeleteResult]
 
-  def insert(document: TDoc): Future[Unit]
-
-  def insert(
-    documents: List[TDoc],
-    options: InsertManyOptions = new InsertManyOptions()): Future[Unit]
-
-  def delete(
-    filter: Bson = new Document(),
-    multi: Boolean = false): Future[DeleteResult]
-
-  def update(
-    filterBson: Bson,
-    updateBson: Bson,
+  def update[T: Codec](
+    filterBson: T,
+    updateBson: T,
     options: UpdateOptions = new UpdateOptions(),
     multi: Boolean = false): Future[UpdateResult]
 
   def drop(): Future[Unit]
 
-  def createIndex(
-    key: Bson,
+  def createIndex[T: Codec](
+    key: T,
     options: IndexOptions = new IndexOptions()): Future[Unit]
 
-  def createIndexes(indexes: List[IndexModel]): Future[Unit]
+  def createIndexes[T: Codec](indexes: List[IndexModel[T]]): Future[Unit]
 
-  def listIndexes(): ListIndexesIterable[TDoc, Document]
-
-  def listIndexesOfType[TRes <: Any : Manifest](): ListIndexesIterable[TDoc, TRes]
+  def listIndexes(): ListIndexesIterable
 
   def dropIndex(indexName: String): Future[Unit]
 

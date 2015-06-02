@@ -5,15 +5,17 @@ import java.util.concurrent.TimeUnit
 import scala.language.implicitConversions
 
 import com.mongodb.MongoNamespace
-import com.mongodb.operation.{DistinctOperation => MongoDistinctOperation}
-import org.bson.BsonDocument
+import com.mongodb.operation.{ DistinctOperation => MongoDistinctOperation }
 import org.bson.codecs.Decoder
+import org.bson.codecs.Encoder
 
-case class DistinctOperation[T](
+import com.evojam.mongodb.client.util.BsonUtil
+
+case class DistinctOperation[T, R](
   namespace: MongoNamespace,
   fieldName: String,
-  decoder: Decoder[T],
-  filter: Option[BsonDocument] = None,
+  decoder: Decoder[R],
+  filter: Option[T] = None,
   maxTime: Option[Long] = None,
   timeUnit: TimeUnit = TimeUnit.MILLISECONDS) {
 
@@ -26,8 +28,8 @@ case class DistinctOperation[T](
 }
 
 object DistinctOperation {
-  implicit def distinctOperation2MongoOperation[T](operation: DistinctOperation[T]) =
+  implicit def distinctOperation2MongoOperation[T: Encoder, R](operation: DistinctOperation[T, R]) =
     new MongoDistinctOperation(operation.namespace, operation.fieldName, operation.decoder)
-      .filter(operation.filter.getOrElse(null))
+      .filter(BsonUtil.toBson[T](operation.filter))
       .maxTime(operation.maxTime.getOrElse(0), operation.timeUnit)
 }

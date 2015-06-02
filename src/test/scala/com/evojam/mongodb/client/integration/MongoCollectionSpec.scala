@@ -4,6 +4,7 @@ import org.bson.Document
 import org.specs2.mutable.Specification
 
 import com.evojam.mongodb.client.MongoClients
+import com.evojam.mongodb.client.codec.Codecs.documentCodec
 
 class MongoCollectionSpec extends Specification {
 
@@ -15,20 +16,20 @@ class MongoCollectionSpec extends Specification {
         .collection("startup_log")
 
     "count on collections" in {
-      collection.count() must beGreaterThan(0L).await(10)
+      collection.count(new Document()) must beGreaterThan(0L).await(10)
     }
 
     "find on collections" in {
       val docs = collection
-        .find()
-        .collect
+        .find(new Document())
+        .collect[Document]
 
       docs must not be empty.await(10)
     }
 
     "limit find to single result" in {
       val docs = collection
-        .find()
+        .find(new Document())
         .limit(1)
 
       docs.collect must haveSize[List[Document]](1).await(10)
@@ -52,12 +53,12 @@ class MongoCollectionSpec extends Specification {
 
     "insert and then delete document from collection" in {
       val insertRes = collection.insert(new Document())
-        .flatMap(_ => collection.find().collect)
+        .flatMap(_ => collection.find(new Document()).collect[Document])
 
       insertRes must not be empty.await(10)
 
-      val deleteRes = collection.delete(multi = true)
-        .flatMap(_ => collection.find().collect)
+      val deleteRes = collection.delete(new Document(), multi = true)
+        .flatMap(_ => collection.find(new Document()).collect[Document])
 
       deleteRes must haveSize[List[Document]](0).await(10)
     }

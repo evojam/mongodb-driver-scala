@@ -8,9 +8,9 @@ import com.mongodb.MongoNamespace
 import com.mongodb.operation.{ListIndexesOperation => MongoListIndexesOperation}
 import org.bson.codecs.Decoder
 
-case class ListIndexesOperation[T](
+case class ListIndexesOperation[R](
   namespace: MongoNamespace,
-  decoder: Decoder[T],
+  decoder: Decoder[R],
   batchSize: Int,
   maxTimeMS: Long) {
 
@@ -21,8 +21,8 @@ case class ListIndexesOperation[T](
 }
 
 object ListIndexesOperation {
-  implicit def listIndexesOperation2Mongo[T](lio: ListIndexesOperation[T]): MongoListIndexesOperation[T] =
-    new MongoListIndexesOperation[T](lio.namespace, lio.decoder)
+  implicit def listIndexesOperation2Mongo[R](lio: ListIndexesOperation[R]): MongoListIndexesOperation[R] =
+    new MongoListIndexesOperation[R](lio.namespace, lio.decoder)
       .batchSize(lio.batchSize)
       .maxTime(lio.maxTimeMS, TimeUnit.MILLISECONDS)
 }

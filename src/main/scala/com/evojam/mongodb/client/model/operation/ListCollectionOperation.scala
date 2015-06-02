@@ -7,11 +7,14 @@ import scala.language.implicitConversions
 import com.mongodb.operation.{ListCollectionsOperation => MongoListCollectionsOperation}
 import org.bson.BsonDocument
 import org.bson.codecs.Decoder
+import org.bson.codecs.Encoder
 
-case class ListCollectionOperation[T](
+import com.evojam.mongodb.client.util.BsonUtil
+
+case class ListCollectionOperation[T, R](
   dbName: String,
-  decoder: Decoder[T],
-  filter: Option[BsonDocument],
+  decoder: Decoder[R],
+  filter: Option[T],
   batchSize: Option[Int],
   maxTimeMS: Option[Long]) {
 
@@ -23,9 +26,10 @@ case class ListCollectionOperation[T](
 }
 
 object ListCollectionOperation {
-  implicit def listOperationToMongo[T](lco: ListCollectionOperation[T]): MongoListCollectionsOperation[T] =
+  implicit def listOperationToMongo[T, R](lco: ListCollectionOperation[T, R])
+    (implicit e: Encoder[T]): MongoListCollectionsOperation[R] =
     new MongoListCollectionsOperation(lco.dbName, lco.decoder)
-      .filter(lco.filter.getOrElse(null))
+      .filter(lco.filter.map(BsonUtil.toBson(_)).getOrElse(null))
       .batchSize(lco.batchSize.getOrElse(0))
       .maxTime(lco.maxTimeMS.getOrElse(0L), MILLISECONDS)
 }

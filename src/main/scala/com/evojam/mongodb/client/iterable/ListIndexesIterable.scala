@@ -1,56 +1,40 @@
 package com.evojam.mongodb.client.iterable
 
+import com.mongodb.MongoNamespace
+import com.mongodb.ReadPreference
+import org.bson.codecs.Codec
+
 import com.evojam.mongodb.client.ObservableOperationExecutor
 import com.evojam.mongodb.client.model.operation.ListIndexesOperation
 
-import com.mongodb.{ MongoNamespace, ReadPreference }
-
-import org.bson.codecs.configuration.CodecRegistry
-
-case class ListIndexesIterable[TDoc <: Any : Manifest, TRes <: Any : Manifest](//scalastyle:ignore
+case class ListIndexesIterable(
   namespace: MongoNamespace,
   readPreference: ReadPreference,
-  codecRegistry: CodecRegistry,
   maxTime: Long = 0L,
   batchSize: Int = 0,
-  executor: ObservableOperationExecutor) extends MongoIterable[TRes] {
+  executor: ObservableOperationExecutor) extends MongoIterable {
 
-  private val documentClass = manifest[TDoc].runtimeClass
+  override def head[R: Codec] =
+    execute[R](queryOperation.copy(batchSize = -1)).head
 
-  def maxTime(time: Long): ListIndexesIterable[TDoc, TRes] =
-    this.copy(maxTime = time)
-
-  def batchSize(size: Int): ListIndexesIterable[TDoc, TRes] =
-    this.copy(batchSize = size)
-
-  private def queryOperation: ListIndexesOperation[TRes] =
-    ListIndexesOperation[TRes](
-      namespace,
-      codecRegistry.get(documentClass.asInstanceOf[Class[TRes]]),
-      batchSize,
-      maxTime)
-
-  private def execute: MongoIterable[TRes] =
-    execute(queryOperation)
-
-  private def execute(lio: ListIndexesOperation[TRes]) =
-    new OperationIterable[TRes](lio, readPreference, executor)
-
-  override def head =
-    execute(queryOperation.copy(batchSize = -1)).head
-
-  override def collect() =
-    execute.collect()
-
-  override def cursor(batchSize: Option[Int]) =
-    execute.cursor(batchSize)
-
-  override def headOpt =
+  override def headOpt[R: Codec] =
     execute(queryOperation.copy(batchSize = -1)).headOpt
 
-  override def foreach(f: (TRes) => Unit) =
+  override def foreach[R: Codec](f: R => Unit) =
     execute.foreach(f)
 
-  override def map[U](f: TRes => U) =
-    MappingIterable[TRes, U](this, f)
+  override def cursor[R: Codec](batchSize: Option[Int]) =
+    execute.cursor(batchSize)
+
+  override def collect[R: Codec]() =
+    execute.collect
+
+  private def execute[R: Codec]: OperationIterable[R] =
+    execute(queryOperation[R])
+
+  private def execute[R: Codec](lio: ListIndexesOperation[R]): OperationIterable[R] =
+    OperationIterable(lio, readPreference, executor)
+
+  private def queryOperation[R]()(implicit c: Codec[R]): ListIndexesOperation[R] =
+    ListIndexesOperation[R](namespace, c, batchSize, maxTime)
 }

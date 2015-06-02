@@ -1,28 +1,27 @@
 package com.evojam.mongodb.client.iterable
 
 // TODO: Think about execution context we want to use
-
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-import com.evojam.mongodb.client.util.AsyncEnriched
+import org.bson.codecs.Codec
 import rx.lang.scala.Observable
 
-case class ResultIterable[T](wrapped: Observable[T]) extends MongoIterable[T] with AsyncEnriched {
+import com.evojam.mongodb.client.util.AsyncEnriched
 
-  override def head = headOpt.map(_.get)
+private[client] case class ResultIterable[R: Codec](wrapped: Observable[R]) extends AsyncEnriched {
 
-  override def cursor(batchSize: Option[Int]) = wrapped
+  def head: Future[R] = headOpt.map(_.get)
 
-  override def headOpt: Future[Option[T]] =
+  def headOpt: Future[Option[R]] =
     wrapped
       .first
       .toList
       .map(_.headOption).toBlocking.toFuture
 
-  override def foreach(f: T => Unit) = wrapped.foreach(f)
+  def foreach(f: R => Unit): Unit = wrapped.foreach(f)
 
-  override def map[U](f: T => U) = ResultIterable(wrapped.map(f))
+  def cursor(batchSize: Option[Int]): Observable[R] = wrapped
 
-  override def collect() = wrapped.toList.toBlocking.toFuture
+  def collect(): Future[List[R]] = wrapped.toList.toBlocking.toFuture
 }

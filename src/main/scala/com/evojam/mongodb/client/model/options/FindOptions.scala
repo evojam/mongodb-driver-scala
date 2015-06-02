@@ -5,16 +5,19 @@ import java.util.concurrent.TimeUnit
 import scala.language.implicitConversions
 
 import com.mongodb.CursorType
-import com.mongodb.client.model.{FindOptions => MongoFindOptions}
-import org.bson.conversions.Bson
+import com.mongodb.client.model.{ FindOptions => MongoFindOptions }
+import org.bson.codecs.Codec
+import org.bson.codecs.Encoder
 
-case class FindOptions(
+import com.evojam.mongodb.client.util.BsonUtil
+
+case class FindOptions[T](
   batchSize: Int,
   limit: Int,
-  modifiers: Bson,
-  projection: Bson,
+  modifiers: Option[T],
+  projection: Option[T],
   skip: Int,
-  sort: Bson,
+  sort: Option[T],
   noCursorTimeout: Boolean,
   oplogRelay: Boolean,
   partial: Boolean,
@@ -27,23 +30,31 @@ case class FindOptions(
 }
 
 object FindOptions {
-  def apply(): FindOptions = {
+  def apply[T]()(implicit c: Codec[T]): FindOptions[T] = {
     val opts = new MongoFindOptions()
-    FindOptions(opts.getBatchSize, opts.getLimit, opts.getModifiers,
-        opts.getProjection, opts.getSkip, opts.getSort, opts.isNoCursorTimeout,
-        opts.isOplogReplay, opts.isPartial, opts.getMaxTime(TimeUnit.MILLISECONDS),
-        TimeUnit.MILLISECONDS, opts.getCursorType)
+    FindOptions(
+      opts.getBatchSize,
+      opts.getLimit,
+      BsonUtil.fromBson(opts.getModifiers),
+      BsonUtil.fromBson(opts.getProjection),
+      opts.getSkip,
+      BsonUtil.fromBson(opts.getSort),
+      opts.isNoCursorTimeout,
+      opts.isOplogReplay,
+      opts.isPartial,
+      opts.getMaxTime(TimeUnit.MILLISECONDS),
+      TimeUnit.MILLISECONDS, opts.getCursorType)
   }
 
-  implicit def findOptions2Mongo(opt: FindOptions) = {
+  implicit def findOptions2Mongo[T](opt: FindOptions[T])(implicit e: Encoder[T]) = {
     val mongoOpt = new MongoFindOptions
     mongoOpt.batchSize(opt.batchSize)
     mongoOpt.limit(opt.limit)
-    mongoOpt.modifiers(opt.modifiers)
-    mongoOpt.projection(opt.projection)
+    mongoOpt.modifiers(BsonUtil.toBson(opt.modifiers))
+    mongoOpt.projection(BsonUtil.toBson(opt.projection))
     mongoOpt.maxTime(opt.maxTime, opt.maxTimeUnit)
     mongoOpt.skip(opt.skip)
-    mongoOpt.sort(opt.sort)
+    mongoOpt.sort(BsonUtil.toBson(opt.sort))
     mongoOpt.noCursorTimeout(opt.noCursorTimeout)
     mongoOpt.oplogReplay(opt.oplogRelay)
     mongoOpt.partial(opt.partial)
