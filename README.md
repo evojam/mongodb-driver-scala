@@ -1,5 +1,7 @@
 # MongoDB Driver Scala
 
+![Travis Build Status](https://travis-ci.org/evojam/mongodb-driver-scala.svg)
+
 Built on top of the new [Java Core Async Driver](http://mongodb.github.io/mongo-java-driver/) from MongoDB,
 the **MongoDB Driver Scala** allows you to achieve end-to-end fully asynchronous non-blocking I/O.
 
