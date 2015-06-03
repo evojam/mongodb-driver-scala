@@ -1,8 +1,7 @@
 # MongoDB Driver Scala
 
 ![Travis Build Status](https://travis-ci.org/evojam/mongodb-driver-scala.svg)
-
-[![Codacy Badge](https://www.codacy.com/project/badge/305004faf8194a27b93e3a9d2b04bbb9)](https://www.codacy.com/app/arturbankowski_3078/mongodb-driver-scala)
+[![Codacy Badge](https://www.codacy.com/project/badge/305004faf8194a27b93e3a9d2b04bbb9)](https://www.codacy.com/app/evojam/mongodb-driver-scala)
 
 Built on top of the new [Java Core Async Driver](http://mongodb.github.io/mongo-java-driver/) from MongoDB,
 the **MongoDB Driver Scala** allows you to achieve end-to-end fully asynchronous non-blocking I/O.
