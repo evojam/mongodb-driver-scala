@@ -1,4 +1,6 @@
 language: scala
+services:
+  - mongodb
 jdk:
    - oraclejdk8
 sbt_args: -no-colors
