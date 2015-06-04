@@ -110,7 +110,7 @@ case class MongoCollectionImpl(
 
   override def dropIndex(indexName: String) = ???
 
-  override def dropIndex(keys: Bson) = ???
+  override def dropIndex[T: Codec](keys: T) = ???
 
   override def dropIndexes() = ???
 

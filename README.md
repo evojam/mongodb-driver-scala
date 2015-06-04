@@ -21,7 +21,7 @@ val testCollection = client.collection("test")
 // Fetch all documents from a collection
 val docs: Future[List[Document]] =
   testCollection
-    .find(new Document())
+    .find()
     .collect[Document]
 ```
 

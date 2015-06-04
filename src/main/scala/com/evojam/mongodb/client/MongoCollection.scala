@@ -12,9 +12,10 @@ import com.mongodb.client.model.RenameCollectionOptions
 import com.mongodb.client.model.UpdateOptions
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
+import org.bson.BsonDocument
 import org.bson.codecs.Codec
-import org.bson.conversions.Bson
 
+import com.evojam.mongodb.client.codec.Codecs
 import com.evojam.mongodb.client.iterable.DistinctIterable
 import com.evojam.mongodb.client.iterable.FindIterable
 import com.evojam.mongodb.client.iterable.ListIndexesIterable
@@ -25,9 +26,21 @@ trait MongoCollection {
 
   def withWriteConcern(writeConcern: WriteConcern): MongoCollection
 
-  def count[T: Codec](filter: T, options: CountOptions = new CountOptions()): Future[Long]
+  def count(): Future[Long] =
+    count[BsonDocument](new BsonDocument(), new CountOptions())(Codecs.bsonDocumentCodec)
+
+  def count[T: Codec](filter: T): Future[Long] =
+    count(filter, new CountOptions())
+
+  def count[T: Codec](filter: T, options: CountOptions): Future[Long]
+
+  def find(): FindIterable[BsonDocument] =
+    find[BsonDocument](new BsonDocument())(Codecs.bsonDocumentCodec)
 
   def find[T: Codec](filter: T): FindIterable[T]
+
+  def distinct(fieldName: String): DistinctIterable[BsonDocument] =
+    distinct[BsonDocument](fieldName, new BsonDocument())(Codecs.bsonDocumentCodec)
 
   def distinct[T: Codec](fieldName: String, filter: T): DistinctIterable[T]
 
@@ -55,7 +68,7 @@ trait MongoCollection {
 
   def dropIndex(indexName: String): Future[Unit]
 
-  def dropIndex(keys: Bson): Future[Unit]
+  def dropIndex[T: Codec](keys: T): Future[Unit]
 
   def dropIndexes(): Future[Unit]
 
