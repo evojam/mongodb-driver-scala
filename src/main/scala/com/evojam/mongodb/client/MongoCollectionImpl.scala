@@ -1,6 +1,6 @@
 package com.evojam.mongodb.client
 
-import scala.collection.JavaConversions.seqAsJavaList
+import scala.collection.JavaConversions._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.language.implicitConversions
@@ -25,8 +25,8 @@ import com.mongodb.operation.DropCollectionOperation
 import com.mongodb.operation.RenameCollectionOperation
 import org.bson.codecs.Codec
 import org.bson.codecs.CollectibleCodec
-import org.bson.conversions.Bson
 
+import com.evojam.mongodb.client.iterable.AggregateIterable
 import com.evojam.mongodb.client.iterable.DistinctIterable
 import com.evojam.mongodb.client.iterable.FindIterable
 import com.evojam.mongodb.client.iterable.ListIndexesIterable
@@ -66,7 +66,9 @@ case class MongoCollectionImpl(
   override def distinct[T: Codec](fieldName: String, filter: T) =
     DistinctIterable(fieldName, Option(filter), namespace, readPreference, executor)
 
-  // TODO: Aggregate
+  override def aggregate[T: Codec](pipeline: List[T]) =
+    AggregateIterable(pipeline, namespace, readPreference, executor)
+
   // TODO: MapReduce
   // TODO: Bulk write/read
 

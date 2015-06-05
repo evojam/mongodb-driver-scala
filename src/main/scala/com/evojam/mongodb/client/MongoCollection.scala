@@ -43,6 +43,8 @@ trait MongoCollection {
 
   def distinct[T: Codec](fieldName: String, filter: T): DistinctIterable[T]
 
+  def aggregate[T: Codec](pipeline: List[T]): AggregateIterable[T]
+
   protected def rawInsert[T: Codec](document: T): Future[Unit]
 
   protected def rawInsertAll[T: Codec](
