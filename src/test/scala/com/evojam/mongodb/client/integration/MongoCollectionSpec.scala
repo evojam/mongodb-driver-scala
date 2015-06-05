@@ -8,8 +8,6 @@ import com.evojam.mongodb.client.codec.Codecs._
 
 class MongoCollectionSpec extends Specification {
 
-  // TODO: Seed data into collection prior to testing
-
   "MongoCollection" should {
     val collection =
       MongoClients.create.getDatabase("local")
@@ -33,16 +31,6 @@ class MongoCollectionSpec extends Specification {
         .limit(1)
 
       docs.collect[Document] must haveSize[List[Document]](1).await(10)
-    }
-
-    "create and list indexes" in {
-      val collection =
-        MongoClients.create.getDatabase("foo")
-          .collection("bar")
-
-      collection.createIndex(new Document("testIndex", 1))
-
-      collection.listIndexes.collect[Document] must not be empty.await(10)
     }
   }
 

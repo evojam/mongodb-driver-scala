@@ -69,9 +69,7 @@ trait MongoCollection {
 
   def drop(): Future[Unit]
 
-  def createIndex[T: Codec](
-    key: T,
-    options: IndexOptions = new IndexOptions()): Future[Unit]
+  def createIndex[T: Codec](key: T, options: IndexOptions = new IndexOptions()): Future[Unit]
 
   def createIndexes[T: Codec](indexes: List[IndexModel[T]]): Future[Unit]
 

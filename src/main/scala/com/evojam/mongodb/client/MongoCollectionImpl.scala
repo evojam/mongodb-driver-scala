@@ -34,6 +34,7 @@ import com.evojam.mongodb.client.model.IndexModel
 import com.evojam.mongodb.client.model.WriteOperation
 import com.evojam.mongodb.client.model.operation.CountOperation
 import com.evojam.mongodb.client.model.operation.CreateIndexesOperation
+import com.evojam.mongodb.client.model.operation.DropIndexOperation
 import com.evojam.mongodb.client.model.options.FindOptions
 import com.evojam.mongodb.client.util.BsonUtil
 import com.evojam.mongodb.client.util.Conversions._
@@ -110,11 +111,16 @@ case class MongoCollectionImpl(
   override def listIndexes =
     ListIndexesIterable(namespace, readPreference, executor = executor)
 
-  override def dropIndex(indexName: String) = ???
+  override def dropIndex(indexName: String) =
+    executor.executeAsync(DropIndexOperation(namespace, indexName))
+      .toBlocking.toFuture.map(_ => ())
 
-  override def dropIndex[T: Codec](keys: T) = ???
+  override def dropIndex[T: Codec](keys: T) =
+    executor.executeAsync(DropIndexOperation(namespace, BsonUtil.toBson(keys)))
+      .toBlocking.toFuture.map(_ => ())
 
-  override def dropIndexes() = ???
+  override def dropIndexes() =
+    dropIndex("*")
 
   override def renameCollection(newCollectionNamespace: MongoNamespace, options: RenameCollectionOptions) =
     executor.executeAsync(new RenameCollectionOperation(namespace, newCollectionNamespace)
