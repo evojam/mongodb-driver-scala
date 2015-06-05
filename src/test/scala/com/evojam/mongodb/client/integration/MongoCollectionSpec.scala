@@ -4,7 +4,7 @@ import org.bson.Document
 import org.specs2.mutable.Specification
 
 import com.evojam.mongodb.client.MongoClients
-import com.evojam.mongodb.client.codec.Codecs.documentCodec
+import com.evojam.mongodb.client.codec.Codecs._
 
 class MongoCollectionSpec extends Specification {
 
@@ -42,7 +42,7 @@ class MongoCollectionSpec extends Specification {
 
       collection.createIndex(new Document("testIndex", 1))
 
-      collection.listIndexes.collect must not be empty.await(10)
+      collection.listIndexes.collect[Document] must not be empty.await(10)
     }
   }
 

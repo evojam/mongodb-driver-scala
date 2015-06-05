@@ -70,10 +70,10 @@ case class MongoCollectionImpl(
   // TODO: MapReduce
   // TODO: Bulk write/read
 
-  override def insert[T: Codec](document: T) =
+  override protected def rawInsert[T: Codec](document: T) =
     executeWrite(new InsertRequest(BsonUtil.toBson(addIdIfAbsent(document))))(_ => ())
 
-  override def insert[T: Codec](documents: List[T], options: InsertManyOptions) =
+  override protected def rawInsertAll[T: Codec](documents: List[T], options: InsertManyOptions) =
     executor.executeAsync(
       WriteOperation(
         namespace,
@@ -84,9 +84,9 @@ case class MongoCollectionImpl(
   override def delete[T: Codec](filter: T, multi: Boolean) =
     executeWrite[DeleteResult](new DeleteRequest(BsonUtil.toBson(filter)))
 
-  override def update[T: Codec](filterBson: T, updateBson: T, options: UpdateOptions, multi: Boolean) =
+  override def update[T: Codec](filter: T, update: T, options: UpdateOptions, multi: Boolean) =
     executeWrite[UpdateResult](
-      new UpdateRequest(BsonUtil.toBson(filterBson), BsonUtil.toBson(updateBson), WriteRequest.Type.UPDATE)
+      new UpdateRequest(BsonUtil.toBson(filter), BsonUtil.toBson(update), WriteRequest.Type.UPDATE)
         .upsert(options.isUpsert)
         .multi(multi))
 

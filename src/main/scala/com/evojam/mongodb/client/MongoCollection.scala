@@ -16,9 +16,8 @@ import org.bson.BsonDocument
 import org.bson.codecs.Codec
 
 import com.evojam.mongodb.client.codec.Codecs
-import com.evojam.mongodb.client.iterable.DistinctIterable
-import com.evojam.mongodb.client.iterable.FindIterable
-import com.evojam.mongodb.client.iterable.ListIndexesIterable
+import com.evojam.mongodb.client.codec.Writer
+import com.evojam.mongodb.client.iterable._
 import com.evojam.mongodb.client.model.IndexModel
 
 trait MongoCollection {
@@ -44,15 +43,25 @@ trait MongoCollection {
 
   def distinct[T: Codec](fieldName: String, filter: T): DistinctIterable[T]
 
-  def insert[T: Codec](document: T): Future[Unit]
+  protected def rawInsert[T: Codec](document: T): Future[Unit]
 
-  def insert[T: Codec](documents: List[T], options: InsertManyOptions = new InsertManyOptions()): Future[Unit]
+  protected def rawInsertAll[T: Codec](
+    documents: List[T],
+    options: InsertManyOptions = new InsertManyOptions()): Future[Unit]
+
+  def insert[T](document: T)(implicit w: Writer[T]): Future[Unit] =
+    rawInsert(w.write(document))(w.codec)
+
+  def insertAll[T](
+    documents: List[T],
+    options: InsertManyOptions = new InsertManyOptions())(implicit w: Writer[T]): Future[Unit] =
+    rawInsertAll(documents.map(w.write(_)), options)(w.codec)
 
   def delete[T: Codec](filter: T, multi: Boolean = false): Future[DeleteResult]
 
   def update[T: Codec](
-    filterBson: T,
-    updateBson: T,
+    filter: T,
+    update: T,
     options: UpdateOptions = new UpdateOptions(),
     multi: Boolean = false): Future[UpdateResult]
 

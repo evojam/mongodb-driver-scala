@@ -5,7 +5,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import com.mongodb.connection.Cluster
 import org.bson.BsonDocument
 
-import com.evojam.mongodb.client.codec.Codecs.bsonDocumentCodec
+import com.evojam.mongodb.client.codec.Codecs._
 import com.evojam.mongodb.client.iterable.ListDatabasesIterable
 
 private[client] class MongoClientImpl(

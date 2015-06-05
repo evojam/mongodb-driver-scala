@@ -12,7 +12,7 @@ import org.bson.Document
 import org.bson.codecs.Encoder
 import org.bson.conversions.Bson
 
-import com.evojam.mongodb.client.codec.Codecs.bsonDocumentCodec
+import com.evojam.mongodb.client.codec.Codecs._
 import com.evojam.mongodb.client.iterable.ListCollectionsIterable
 import com.evojam.mongodb.client.iterable.MongoIterable
 

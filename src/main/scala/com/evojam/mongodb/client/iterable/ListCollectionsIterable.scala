@@ -7,13 +7,28 @@ import org.bson.codecs.Encoder
 import com.evojam.mongodb.client.ObservableOperationExecutor
 import com.evojam.mongodb.client.model.operation.ListCollectionOperation
 
-case class ListCollectionsIterable[T: Encoder](
+private[client] case class ListCollectionsIterable[T: Encoder](
   dbName: String,
   readPreference: ReadPreference,
   executor: ObservableOperationExecutor,
   filter: Option[T] = None,
   maxTime: Option[Long] = None,
   batchSize: Option[Int] = None) extends MongoIterable {
+
+  override protected def rawHead[R: Codec]() =
+    execute(queryOperation.copy(batchSize = Some(-1))).head
+
+  override protected def rawHeadOpt[R: Codec]() =
+    execute(queryOperation.copy(batchSize = Some(-1))).headOpt
+
+  override protected def rawForeach[R: Codec](f: R => Unit) =
+    execute.foreach(f)
+
+  override protected def rawCursor[R: Codec](batchSize: Option[Int]) =
+    execute.cursor(batchSize)
+
+  override protected def rawCollect[R: Codec]() =
+    execute.collect()
 
   def filter(filter: T): ListCollectionsIterable[T] = {
     require(filter != null, "filter cannot be null")
@@ -38,18 +53,4 @@ case class ListCollectionsIterable[T: Encoder](
 
   private def queryOperation[R]()(implicit c: Codec[R]) =
     ListCollectionOperation[T, R](dbName, c, filter, batchSize, maxTime)
-
-  override def head[R: Codec] =
-    execute(queryOperation.copy(batchSize = Some(-1))).head
-
-  override def headOpt[R: Codec] =
-    execute(queryOperation.copy(batchSize = Some(-1))).headOpt
-
-  override def foreach[R: Codec](f: R => Unit) =
-    execute.foreach(f)
-
-  override def cursor[R: Codec](batchSize: Option[Int]) =
-    execute.cursor(batchSize)
-
-  override def collect[R: Codec]() = execute.collect()
 }

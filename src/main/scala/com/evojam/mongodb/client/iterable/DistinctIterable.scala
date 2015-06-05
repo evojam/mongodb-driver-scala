@@ -12,7 +12,7 @@ import org.bson.codecs.Encoder
 import com.evojam.mongodb.client.ObservableOperationExecutor
 import com.evojam.mongodb.client.model.DistinctOperation
 
-case class DistinctIterable[T: Encoder](
+private[client] case class DistinctIterable[T: Encoder](
   fieldName: String,
   filter: Option[T],
   namespace: MongoNamespace,
@@ -26,15 +26,20 @@ case class DistinctIterable[T: Encoder](
   require(readPreference != null, "readPreference cannot be null")
   require(executor != null, "executor cannot be null")
 
-  override def head[R: Codec] = execute[R].head
+  override protected def rawHead[R: Codec]() =
+    execute[R].head
 
-  override def headOpt[R: Codec] = execute[R].headOpt
+  override protected def rawHeadOpt[R: Codec]() =
+    execute[R].headOpt
 
-  override def foreach[R: Codec](f: R => Unit) = execute.foreach(f)
+  override protected def rawForeach[R: Codec](f: R => Unit) =
+    execute.foreach(f)
 
-  override def cursor[R: Codec](batchSize: Option[Int] = None) = execute.cursor(batchSize)
+  override protected def rawCursor[R: Codec](batchSize: Option[Int] = None) =
+    execute.cursor(batchSize)
 
-  override def collect[R: Codec]() = execute[R].collect
+  override protected def rawCollect[R: Codec]() =
+    execute[R].collect
 
   def filter(filter: T) = this.copy(filter = Option(filter))
 
@@ -43,7 +48,8 @@ case class DistinctIterable[T: Encoder](
     this.copy(maxTimeMS = Some(TimeUnit.MILLISECONDS.convert(maxTime, timeUnit)))
   }
 
-  private def execute[R: Codec]: OperationIterable[R] = execute(distinctOperation[R])
+  private def execute[R: Codec]: OperationIterable[R] =
+    execute(distinctOperation[R])
 
   private def execute[R](operation: DistinctOperation[T, R])(implicit c: Codec[R]): OperationIterable[R] =
     OperationIterable(operation, readPreference, executor)

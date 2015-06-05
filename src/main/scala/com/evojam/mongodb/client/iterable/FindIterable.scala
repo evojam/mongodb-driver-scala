@@ -12,7 +12,7 @@ import com.evojam.mongodb.client.ObservableOperationExecutor
 import com.evojam.mongodb.client.model.operation.FindOperation
 import com.evojam.mongodb.client.model.options.FindOptions
 
-case class FindIterable[T: Encoder](
+private[client] case class FindIterable[T: Encoder](
   filter: Option[T],
   findOptions: FindOptions[T],
   namespace: MongoNamespace,
@@ -25,21 +25,23 @@ case class FindIterable[T: Encoder](
   require(readPreference != null, "readPreference cannot be null")
   require(executor != null, "executor cannt be null")
 
-  override def head[R: Codec] =
+  override protected def rawHead[R: Codec]() =
     execute[R](queryOperation[R].copy(batchSize = 0, limit = -1)).head
 
-  override def headOpt[R: Codec] =
+  override protected def rawHeadOpt[R: Codec]() =
     execute[R](queryOperation[R].copy(batchSize = 0, limit = -1)).headOpt
 
-  override def foreach[R: Codec](f: R => Unit) =
+  override protected def rawForeach[R: Codec](f: R => Unit) =
     execute.foreach(f)
 
-  override def cursor[R: Codec](batchSize: Option[Int]) =
+  override protected def rawCursor[R: Codec](batchSize: Option[Int]) =
     execute.cursor(batchSize)
 
-  override def collect[R: Codec]() = execute[R].collect()
+  override protected def rawCollect[R: Codec]() =
+    execute[R].collect()
 
-  private def execute[R: Codec]: OperationIterable[R] = execute(queryOperation[R])
+  private def execute[R: Codec]: OperationIterable[R] =
+    execute(queryOperation[R])
 
   private def execute[R: Codec](fo: FindOperation[T, R]): OperationIterable[R] =
     OperationIterable(fo, readPreference, executor)
