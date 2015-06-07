@@ -15,6 +15,11 @@ When MongoDB released the new *Core Async Driver*, we decided to start this proj
 ## Going Async
 
 ```scala
+import scala.concurrent.Future
+import com.evojam.mongodb.client.MongoClients
+import com.evojam.mongodb.client.codec.Codecs._
+import org.bson.Document
+
 val client = MongoClients.create() // Default connection to localhost:27017
 val testCollection = client.collection("test")
 
@@ -25,13 +30,17 @@ val docs: Future[List[Document]] =
     .collect[Document]
 ```
 
+## Requirements
+
+- JDK8
+
 ## Installation
 
 **MongoDB Driver Scala** is available from Sonatype, simply add it as a dependency to your `build.sbt`
 
 ```
 resolvers += "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
-libraryDependencies += "com.evojam" % "mongo-driver-scala_2.11" % "0.1.0-SNAPSHOT"
+libraryDependencies += "com.evojam" % "mongo-driver-scala_2.11" % "0.3.2-SNAPSHOT"
 ```
 
 ## Framework Integration
