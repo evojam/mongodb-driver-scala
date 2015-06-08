@@ -32,13 +32,13 @@ val docs: Future[List[Document]] =
 
 ## Requirements
 
-- JDK8
+- JDK7 or above
 
 ## Installation
 
 **MongoDB Driver Scala** is available from Sonatype, simply add it as a dependency to your `build.sbt`
 
-```
+```scala
 resolvers += "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
 libraryDependencies += "com.evojam" % "mongo-driver-scala_2.11" % "0.3.2-SNAPSHOT"
 ```

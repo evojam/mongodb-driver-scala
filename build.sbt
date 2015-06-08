@@ -2,12 +2,12 @@ organization := "com.evojam"
 
 name := "mongo-driver-scala"
 
-scalaVersion := "2.11.5"
+scalaVersion := "2.11.6"
 
-crossScalaVersions := Seq("2.11.5")
+crossScalaVersions := Seq("2.11.6")
 
 scalacOptions ++= Seq(
-  "-target:jvm-1.8",
+  "-target:jvm-1.7",
   "-encoding", "UTF-8",
   "-deprecation",
   "-feature",
