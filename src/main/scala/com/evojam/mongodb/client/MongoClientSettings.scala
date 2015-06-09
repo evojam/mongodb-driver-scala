@@ -11,6 +11,7 @@ import org.bson.codecs.configuration.CodecRegistry
 import org.bson.codecs.{ BsonValueCodecProvider, DocumentCodecProvider, ValueCodecProvider }
 
 case class MongoClientSettings(
+  defaultDatabaseName: String,
   readPreference: ReadPreference,
   writeConcern: WriteConcern,
   credentialList: List[MongoCredential],
@@ -21,6 +22,8 @@ case class MongoClientSettings(
   connectionPoolSettings: ConnectionPoolSettings,
   serverSettings: ServerSettings,
   sslSettings: SslSettings) {
+
+  def defaultDatabaseName(databaseName: String): MongoClientSettings = copy(defaultDatabaseName = databaseName)
 
   def readPreference(preference: ReadPreference): MongoClientSettings = copy(readPreference = preference)
 
@@ -47,6 +50,8 @@ case class MongoClientSettings(
 object MongoClientSettings {
 
   object Default {
+    lazy val databaseName = "test"
+
     lazy val readPreference: ReadPreference = ReadPreference.primary()
 
     lazy val writeConcern: WriteConcern = WriteConcern.NORMAL
@@ -70,6 +75,7 @@ object MongoClientSettings {
   }
 
   def apply(): MongoClientSettings = apply(
+    Default.databaseName,
     Default.readPreference,
     Default.writeConcern,
     Default.credentialList,

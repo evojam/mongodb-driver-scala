@@ -13,6 +13,11 @@ private[client] class MongoClientImpl(
   override val settings: MongoClientSettings,
   executor: ObservableOperationExecutor) extends MongoClient {
 
+  lazy val defaultDatabase =
+    new MongoDatabase(settings.defaultDatabaseName, settings.readPreference, settings.writeConcern, executor)
+
+  override def database() = defaultDatabase
+
   override def getDatabase(name: String) =
     new MongoDatabase(name, settings.readPreference, settings.writeConcern, executor)
 

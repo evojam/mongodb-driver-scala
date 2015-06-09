@@ -15,6 +15,7 @@ object MongoClients {
     .credentialList(connectionString.getCredentialList.toList)
     .sslSettings(SslSettings.builder.applyConnectionString(connectionString).build)
     .socketSettings(SocketSettings.builder.applyConnectionString(connectionString).build)
+    .defaultDatabaseName(Option(connectionString.getDatabase).getOrElse(MongoClientSettings.Default.databaseName))
 
   def create: MongoClient = create(new ConnectionString("mongodb://localhost"))
 

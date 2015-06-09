@@ -1,6 +1,6 @@
 package com.evojam.mongodb.client.integration
 
-import com.evojam.mongodb.client.{ MongoClient, MongoClients }
+import com.evojam.mongodb.client.{ MongoDatabase, MongoClient, MongoClients }
 import org.specs2.mutable.Specification
 import org.bson.Document
 
@@ -19,6 +19,10 @@ class MongoClientsSpec extends Specification {
       val db = MongoClients.create.getDatabase("local")
 
       db.listCollectionNames must not be empty.await(10)
+    }
+
+    "return default databsae" in {
+      MongoClients.create.database().name must be equalTo "test"
     }
   }
 }

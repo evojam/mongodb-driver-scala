@@ -17,7 +17,7 @@ import com.evojam.mongodb.client.iterable.ListCollectionsIterable
 import com.evojam.mongodb.client.iterable.MongoIterable
 
 class MongoDatabase(
-  name: String,
+  val name: String,
   readPref: ReadPreference,
   writeConcern: WriteConcern,
   executor: ObservableOperationExecutor) {
