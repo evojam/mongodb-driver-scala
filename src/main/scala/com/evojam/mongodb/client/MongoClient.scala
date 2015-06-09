@@ -8,7 +8,7 @@ trait MongoClient extends Closeable {
 
   def database(): MongoDatabase
 
-  def getDatabase(name: String): MongoDatabase //TODO: Remove get prefix
+  def database(name: String): MongoDatabase
 
   def settings: MongoClientSettings
 

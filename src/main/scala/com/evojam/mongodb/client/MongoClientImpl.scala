@@ -18,7 +18,7 @@ private[client] class MongoClientImpl(
 
   override def database() = defaultDatabase
 
-  override def getDatabase(name: String) =
+  override def database(name: String) =
     new MongoDatabase(name, settings.readPreference, settings.writeConcern, executor)
 
   override def databaseNames() =

@@ -17,7 +17,7 @@ object MongoClients {
     .socketSettings(SocketSettings.builder.applyConnectionString(connectionString).build)
     .defaultDatabaseName(Option(connectionString.getDatabase).getOrElse(MongoClientSettings.Default.databaseName))
 
-  def create: MongoClient = create(new ConnectionString("mongodb://localhost"))
+  def create(): MongoClient = create(new ConnectionString("mongodb://localhost"))
 
   def create(settings: MongoClientSettings): MongoClient =
     MongoClientImpl(settings, createCluster(settings, getStreamFactory(settings)))

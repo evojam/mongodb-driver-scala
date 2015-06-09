@@ -16,9 +16,9 @@ class MongoClientsSpec extends Specification {
     }
 
     "list collections" in {
-      val db = MongoClients.create.getDatabase("local")
+      val db = MongoClients.create.database("local")
 
-      db.listCollectionNames must not be empty.await(10)
+      db.listCollectionNames() must not be empty.await(10)
     }
 
     "return default databsae" in {

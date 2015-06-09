@@ -11,7 +11,7 @@ import com.evojam.mongodb.client.MongoClients
 import com.evojam.mongodb.client.codec.Codecs._
 
 trait SampleNonEmptyCollection extends BeforeAfter {
-  val db = MongoClients.create.getDatabase("foodb")
+  val db = MongoClients.create().database("foodb")
   val collection = db.collection("bar")
 
   def collectionContent: List[Document]

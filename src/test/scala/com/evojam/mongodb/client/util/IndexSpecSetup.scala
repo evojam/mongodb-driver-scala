@@ -9,7 +9,7 @@ import com.evojam.mongodb.client.MongoClients
 
 trait IndexSpecSetup extends BeforeExample {
 
-  val db = MongoClients.create.getDatabase("foodb")
+  val db = MongoClients.create().database("foodb")
   val collection = db.collection("bar")
 
   def before = {

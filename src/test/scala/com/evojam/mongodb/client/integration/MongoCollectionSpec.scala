@@ -10,7 +10,7 @@ class MongoCollectionSpec extends Specification {
 
   "MongoCollection" should {
     val collection =
-      MongoClients.create.getDatabase("local")
+      MongoClients.create().database("local")
         .collection("startup_log")
 
     "count on collections" in {
@@ -36,7 +36,7 @@ class MongoCollectionSpec extends Specification {
 
   "MongoCollection" should {
     val collection =
-      MongoClients.create.getDatabase("testdb")
+      MongoClients.create().database("testdb")
         .collection("acollection")
 
     "insert and then delete document from collection" in {
