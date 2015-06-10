@@ -15,8 +15,7 @@ import com.mongodb.client.result.UpdateResult
 import org.bson.BsonDocument
 import org.bson.codecs.Codec
 
-import com.evojam.mongodb.client.codec.Codecs
-import com.evojam.mongodb.client.codec.Writer
+import com.evojam.mongodb.client.codec.{ Reader, Codecs, Writer }
 import com.evojam.mongodb.client.iterable._
 import com.evojam.mongodb.client.model.IndexModel
 
@@ -64,8 +63,19 @@ trait MongoCollection {
   def update[T: Codec](
     filter: T,
     update: T,
-    options: UpdateOptions = new UpdateOptions(),
+    upsert: Boolean = false,
     multi: Boolean = false): Future[UpdateResult]
+
+  def upsert[T: Codec](
+    filter: T,
+    update: T,
+    multi: Boolean = false): Future[UpdateResult]
+
+  def findAndModify[T: Codec, R: Reader](
+    filter: T,
+    update: T,
+    returnFormer: Boolean = false,
+    upsert: Boolean = false): Future[Option[R]]
 
   def drop(): Future[Unit]
 

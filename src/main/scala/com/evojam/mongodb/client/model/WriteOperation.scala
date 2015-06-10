@@ -16,11 +16,11 @@ case class WriteOperation(
 
   require(namespace != null, "namespace cannot be null")
   require(writeRequests != null, "writeRequests cannot be null")
-  require(!writeRequests.isEmpty, "writeRequests cannot be empty")
+  require(writeRequests.nonEmpty, "writeRequests cannot be empty")
   require(writeConcern != null, "writeConcern cannot be null")
 }
 
 object WriteOperation {
-  implicit def writeOperation2MixedBulkWriteOperation(op: WriteOperation) =
+  implicit def writeOperation2MixedBulkWriteOperation(op: WriteOperation): MixedBulkWriteOperation =
     new MixedBulkWriteOperation(op.namespace, op.writeRequests, op.ordered, op.writeConcern)
 }

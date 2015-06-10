@@ -1,10 +1,13 @@
 package com.evojam.mongodb.client
 
+import javafx.beans.binding.When
+
 import scala.collection.JavaConversions._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.language.implicitConversions
 
+import com.evojam.mongodb.client.codec.Reader
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
@@ -21,10 +24,9 @@ import com.mongodb.client.model.RenameCollectionOptions
 import com.mongodb.client.model.UpdateOptions
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
-import com.mongodb.operation.DropCollectionOperation
-import com.mongodb.operation.RenameCollectionOperation
-import org.bson.codecs.Codec
-import org.bson.codecs.CollectibleCodec
+import com.mongodb.operation.{ FindAndUpdateOperation, DropCollectionOperation, RenameCollectionOperation }
+import org.bson.{ BsonDocument, Document }
+import org.bson.codecs.{ BsonDocumentCodec, DocumentCodec, Codec, CollectibleCodec }
 
 import com.evojam.mongodb.client.iterable.AggregateIterable
 import com.evojam.mongodb.client.iterable.DistinctIterable
@@ -87,11 +89,34 @@ case class MongoCollectionImpl(
   override def delete[T: Codec](filter: T, multi: Boolean) =
     executeWrite[DeleteResult](new DeleteRequest(BsonUtil.toBson(filter)))
 
-  override def update[T: Codec](filter: T, update: T, options: UpdateOptions, multi: Boolean) =
+  override def update[T: Codec](filter: T, update: T, upsert: Boolean, multi: Boolean) =
     executeWrite[UpdateResult](
       new UpdateRequest(BsonUtil.toBson(filter), BsonUtil.toBson(update), WriteRequest.Type.UPDATE)
-        .upsert(options.isUpsert)
+        .upsert(upsert)
         .multi(multi))
+
+  override def upsert[T: Codec](
+    filter: T,
+    update: T,
+    multi: Boolean = false) = this.update(filter, update, upsert = true, multi = multi)
+
+  // TODO: Implement sort
+  // FIXME: When update is not valid document (eg.: instead of { $set : { field: value } } it is { field: value } the
+  // weird exception is thrown by the driver...
+
+  def executeFindAndModify[T, R](filter: T, update: T, returnFormer: Boolean, upsert: Boolean)(implicit codec: Codec[T],
+    reader: Reader[R]): Future[Option[R]] =
+    executor.executeAsync(
+      new FindAndUpdateOperation(namespace, reader.codec, BsonUtil.toBson(update))
+        .upsert(upsert).returnOriginal(returnFormer))
+      .toBlocking.toFuture.map(Option(_).map(reader.read))
+
+  override def findAndModify[T: Codec, R: Reader](
+    filter: T,
+    update: T,
+    returnFormer: Boolean = false,
+    upsert: Boolean = false) =
+    executeFindAndModify(filter, update, returnFormer, upsert)
 
   override def drop() =
     executor.executeAsync(new DropCollectionOperation(namespace))
@@ -108,7 +133,7 @@ case class MongoCollectionImpl(
     executor.executeAsync(CreateIndexesOperation(namespace, buildIndexRequests(indexes)))
       .toBlocking.toFuture.map(_ => ())
 
-  override def listIndexes =
+  override def listIndexes() =
     ListIndexesIterable(namespace, readPreference, executor = executor)
 
   override def dropIndex(indexName: String) =
@@ -132,7 +157,7 @@ case class MongoCollectionImpl(
 
   private def executeSingleWriteRequest(request: WriteRequest): Future[BulkWriteResult] =
     executor.executeAsync[BulkWriteResult](
-      WriteOperation(namespace, List(request), true, writeConcern))
+      WriteOperation(namespace, List(request), ordered = true, writeConcern))
       .toBlocking.toFuture
 
   private def addIdIfAbsent[T](doc: T)(implicit c: Codec[T]): T = c match {
