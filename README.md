@@ -7,6 +7,9 @@
 Built on top of the new [Java Core Async Driver](http://mongodb.github.io/mongo-java-driver/) from MongoDB,
 the **MongoDB Driver Scala** allows you to achieve end-to-end fully asynchronous non-blocking I/O.
 
+The library is designed for MongoDB 3.0.x and will be updated to support newer releases. However it successfuly works
+with older revisions of Mongo server except for some specific commands that may fail.
+
 ## Why?
 When MongoDB released the new *Core Async Driver*, we decided to start this project for a few reasons
 * The driver we were extensively using, *ReactiveMongo*, has been [less and less active](https://github.com/ReactiveMongo/ReactiveMongo/commits/master).
