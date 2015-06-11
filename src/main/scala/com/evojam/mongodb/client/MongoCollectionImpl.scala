@@ -76,13 +76,13 @@ case class MongoCollectionImpl(
   // TODO: Bulk write/read
 
   override protected def rawInsert[T: Codec](document: T) =
-    executeWrite(new InsertRequest(BsonUtil.toBson(addIdIfAbsent(document))))(_ => ())
+    executeWrite(new InsertRequest(BsonUtil.toBson(document)))(_ => ())
 
   override protected def rawInsertAll[T: Codec](documents: List[T], options: InsertManyOptions) =
     executor.executeAsync(
       WriteOperation(
         namespace,
-        documents.map(doc => new InsertRequest(BsonUtil.toBson(addIdIfAbsent(doc)))),
+        documents.map(doc => new InsertRequest(BsonUtil.toBson(doc))),
         options.isOrdered,
         writeConcern)).toList.toBlocking.toFuture.map(_ => ())
 
@@ -159,11 +159,4 @@ case class MongoCollectionImpl(
     executor.executeAsync[BulkWriteResult](
       WriteOperation(namespace, List(request), ordered = true, writeConcern))
       .toBlocking.toFuture
-
-  private def addIdIfAbsent[T](doc: T)(implicit c: Codec[T]): T = c match {
-    case collCodec: CollectibleCodec[T] =>
-      collCodec.generateIdIfAbsentFromDocument(doc)
-      doc
-    case _ => doc
-  }
 }
