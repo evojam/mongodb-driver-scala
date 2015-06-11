@@ -35,5 +35,6 @@ libraryDependencies ++= Seq(
   "org.specs2" %% "specs2-mock" % "2.4.11" % "test",
   "io.netty" % "netty-all" % "4.0.28.Final",
   "org.mongodb" % "mongodb-driver-core" % "3.0.2",
-  "io.reactivex" % "rxscala_2.11" % "0.24.1"
+  "io.reactivex" % "rxscala_2.11" % "0.24.1",
+  "ch.qos.logback" % "logback-classic" % "1.1.3"
 )
