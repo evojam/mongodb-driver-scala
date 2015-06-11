@@ -65,6 +65,7 @@ class MongoCollectionSpec extends Specification {
         .collection("acollection")
 
     Await.ready(collection.delete(new Document()), Duration.Inf)
+    Await.ready(collection.insert(new Document("_id", "any")), Duration.Inf)
 
     val document = new Document()
     document.append("_id", "docid")

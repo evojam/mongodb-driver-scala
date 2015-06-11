@@ -108,6 +108,7 @@ case class MongoCollectionImpl(
     reader: Reader[R]): Future[Option[R]] =
     executor.executeAsync(
       new FindAndUpdateOperation(namespace, reader.codec, BsonUtil.toBson(update))
+        .filter(BsonUtil.toBson(filter))
         .upsert(upsert).returnOriginal(returnFormer))
       .toBlocking.toFuture.map(Option(_).map(reader.read))
 
