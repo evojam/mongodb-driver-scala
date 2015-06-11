@@ -82,34 +82,38 @@ class MongoCollectionSpec extends Specification {
     val update2 = new Document("$set", new Document("b", "secondanother"))
 
     "fail to find and create nothing" in {
-
       collection
-        .findAndModify[Document, Document](
+        .findAndModify(
           selector,
-          new Document("$set", document), upsert = false) must beNone.await(10)
+          new Document("$set", document),
+          upsert = false)
+        .collect[Document] must beNone.await
 
     }
 
     "insert document into collection" in {
 
       collection
-        .findAndModify[Document, Document](
+        .findAndModify(
           selector,
-          new Document("$set", document), upsert = true) must beSome(document).await(10)
+          new Document("$set", document),
+          upsert = true)
+        .collect[Document] must beSome(document).await
 
     }
 
     "modify and return updated" in {
 
       collection
-        .findAndModify[Document, Document](selector, update1) must beSome(expectedDocument).await(10)
+        .findAndModify(selector, update1)
+        .collect[Document] must beSome(expectedDocument).await
 
     }
 
     "modify and return former" in {
       collection
-        .findAndModify[Document, Document](selector, update2, returnFormer = true) must beSome(expectedDocument)
-        .await(10)
+        .findAndModify(selector, update2, returnFormer = true)
+        .collect[Document] must beSome(expectedDocument).await
     }
 
   }
