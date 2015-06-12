@@ -7,14 +7,16 @@ import com.mongodb.MongoNamespace
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
 import com.mongodb.client.model.CreateCollectionOptions
+import com.mongodb.operation.CommandReadOperation
+import com.mongodb.operation.CommandWriteOperation
 import org.bson.BsonDocument
-import org.bson.Document
+import org.bson.codecs.Codec
 import org.bson.codecs.Encoder
-import org.bson.conversions.Bson
 
 import com.evojam.mongodb.client.codec.Codecs._
 import com.evojam.mongodb.client.iterable.ListCollectionsIterable
 import com.evojam.mongodb.client.iterable.MongoIterable
+import com.evojam.mongodb.client.util.BsonUtil
 
 class MongoDatabase(
   val name: String,
@@ -47,13 +49,23 @@ class MongoDatabase(
   def collection(collectionName: String): MongoCollection =
     MongoCollectionImpl(new MongoNamespace(name, collectionName), readPref, writeConcern, executor)
 
-  def runCommand(command: Bson): Future[Document] = ???
+  def runCommand[T: Codec](command: T): Future[T] = {
+    require(command != null, "command cannot be null")
 
-  def runCommand(command: Bson, readPref: ReadPreference): Future[Document] = ???
+    executor.executeAsync(
+      new CommandWriteOperation(name, BsonUtil.toBson(command), implicitly[Codec[T]]))
+      .toBlocking.toFuture
+  }
 
-  def runCommand[T](command: Bson, resultClass: Class[T]): Future[T] = ???
+  def runCommand[T: Codec](command: T, readPref: ReadPreference): Future[T] = {
+    require(command != null, "command cannot be null")
+    require(readPref != null, "readPref cannot be null")
 
-  def runCommand[T](command: Bson, resultClass: Class[T], readPref: ReadPreference): Future[T] = ???
+    executor.executeAsync(
+      new CommandReadOperation(name, BsonUtil.toBson(command), implicitly[Codec[T]]),
+      readPref)
+      .toBlocking.toFuture
+  }
 
   def drop(): Future[Unit] = ???
 
