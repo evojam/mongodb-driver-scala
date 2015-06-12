@@ -71,11 +71,11 @@ trait MongoCollection {
     update: T,
     multi: Boolean = false): Future[UpdateResult]
 
-  def findAndModify[T: Codec, R: Reader](
+  def findAndModify[T: Codec](
     filter: T,
     update: T,
     returnFormer: Boolean = false,
-    upsert: Boolean = false): Future[Option[R]]
+    upsert: Boolean = false): SingleResult
 
   def drop(): Future[Unit]
 

@@ -1,13 +1,10 @@
 package com.evojam.mongodb.client
 
-import javafx.beans.binding.When
-
 import scala.collection.JavaConversions._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.language.implicitConversions
 
-import com.evojam.mongodb.client.codec.Reader
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
@@ -28,10 +25,7 @@ import com.mongodb.operation.{ FindAndUpdateOperation, DropCollectionOperation, 
 import org.bson.{ BsonDocument, Document }
 import org.bson.codecs.{ BsonDocumentCodec, DocumentCodec, Codec, CollectibleCodec }
 
-import com.evojam.mongodb.client.iterable.AggregateIterable
-import com.evojam.mongodb.client.iterable.DistinctIterable
-import com.evojam.mongodb.client.iterable.FindIterable
-import com.evojam.mongodb.client.iterable.ListIndexesIterable
+import com.evojam.mongodb.client.iterable._
 import com.evojam.mongodb.client.model.IndexModel
 import com.evojam.mongodb.client.model.WriteOperation
 import com.evojam.mongodb.client.model.operation.CountOperation
@@ -40,6 +34,7 @@ import com.evojam.mongodb.client.model.operation.DropIndexOperation
 import com.evojam.mongodb.client.model.options.FindOptions
 import com.evojam.mongodb.client.util.BsonUtil
 import com.evojam.mongodb.client.util.Conversions._
+import com.evojam.mongodb.client.codec.Reader
 
 case class MongoCollectionImpl(
   namespace: MongoNamespace,
@@ -112,12 +107,14 @@ case class MongoCollectionImpl(
         .upsert(upsert).returnOriginal(returnFormer))
       .toBlocking.toFuture.map(Option(_).map(reader.read))
 
-  override def findAndModify[T: Codec, R: Reader](
+  override def findAndModify[T: Codec](
     filter: T,
     update: T,
     returnFormer: Boolean = false,
-    upsert: Boolean = false) =
-    executeFindAndModify(filter, update, returnFormer, upsert)
+    upsert: Boolean = false): SingleResult = new SingleResult {
+      override def collect[R: Reader](): Future[Option[R]] =
+        executeFindAndModify(filter, update, returnFormer, upsert)
+    }
 
   override def drop() =
     executor.executeAsync(new DropCollectionOperation(namespace))
