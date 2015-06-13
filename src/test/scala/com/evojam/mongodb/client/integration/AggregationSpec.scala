@@ -6,7 +6,7 @@ import org.specs2.mutable.Specification
 import com.evojam.mongodb.client.codec.Codecs._
 import com.evojam.mongodb.client.util.SampleNonEmptyCollection
 
-class MongoCollectionAggregationSpec extends Specification {
+class AggregationSpec extends Specification {
   trait AggregationNonEmptyCollection extends SampleNonEmptyCollection {
     override def collectionContent = List(
       new Document()
@@ -34,7 +34,7 @@ class MongoCollectionAggregationSpec extends Specification {
     new Document()
       .append("_id", "male"))
 
-  "Aggregation on MongoCollection" should {
+  "Aggregation" should {
     sequential
 
     "execute a pipeline" in new AggregationNonEmptyCollection {
