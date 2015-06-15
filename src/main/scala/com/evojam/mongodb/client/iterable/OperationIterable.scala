@@ -31,7 +31,11 @@ private[client] case class OperationIterable[R: Codec](
 
   def foreach(f: R => Unit): Unit = observable.foreach(f)
 
-  def cursor(batchSize: Option[Int]): Observable[R] = observable
+  def cursor(): Observable[R] = observable
+
+  def cursor(batchSize: Int): Observable[List[R]] =
+    executor.executeAsync(operation, readPreference)
+      .flatMap(_.asBatchObservable(batchSize))
 
   def collect(): Future[List[R]] = observable.toList.toBlocking.toFuture
 }

@@ -145,5 +145,46 @@ class MongoCollectionSpec extends Specification {
 
       resValues must be_==(docs.drop(2).take(2).map(_.getString("prop"))).await
     }
+
+    "return elements one by one from cursor" in {
+      val res = collection
+        .find()
+        .cursor[Document]()
+
+      val check = res.zip(docs).map {
+        case (docDb, docCol) =>
+          (docDb.getString("prop"), docCol.getString("prop"))
+      }.toList.toBlocking.toFuture
+
+      check.map(_.forall {
+        case (p1, p2) => p1 == p2
+      }) must be_==(true).await
+    }
+
+    "return elements in batches from cursor" in {
+      val res = collection
+        .find()
+        .cursor[Document](2)
+        .toList.toBlocking.toFuture
+        .map(_.map(_.map(_.getString("prop"))))
+
+      val docVals = docs.map(_.getString("prop"))
+
+      res must haveSize[List[List[String]]](3).await
+      res.map(_(0)) must be_==(docVals.take(2)).await
+      res.map(_(1)) must be_==(docVals.drop(2).take(2)).await
+      res.map(_(2)) must be_==(docVals.drop(4).take(1)).await
+    }
+
+    "return empty batch cursor from empty collection" in {
+      val res = MongoClients.create()
+        .database("foo")
+        .collection("emptyone")
+        .find()
+        .cursor[Document](3)
+        .toList.toBlocking.toFuture
+
+      res must haveSize[List[List[Document]]](0).await
+    }
   }
 }

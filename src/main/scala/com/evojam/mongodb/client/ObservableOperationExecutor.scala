@@ -27,7 +27,6 @@ public interface AsyncOperationExecutor {
     <T> void execute(AsyncWriteOperation<T> operation, SingleResultCallback<T> callback);
 }
 
-
 public interface SingleResultCallback<T> {
     /**
      * Called when the operation completes.

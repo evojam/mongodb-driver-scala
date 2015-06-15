@@ -42,8 +42,12 @@ private[client] case class AggregateIterable[T: Encoder](
   override protected def rawForeach[R: Codec](f: R => Unit) =
     execute().foreach(f)
 
-  override protected def rawCursor[R: Codec](batchSize: Option[Int]) =
-    execute().cursor(batchSize)
+  override protected def rawCursor[R: Codec]() =
+    execute().cursor()
+
+  override protected def rawCursor[R: Codec](batchSize: Int) =
+    execute(aggregateOperation[R](bsonPipeline).copy(batchSize = Some(batchSize)))
+      .cursor(batchSize)
 
   override protected def rawCollect[R: Codec]() =
     execute().collect()
@@ -51,7 +55,10 @@ private[client] case class AggregateIterable[T: Encoder](
   def toCollection(): Future[Unit] = ???
 
   private def execute[R: Codec](): OperationIterable[R] =
-    OperationIterable(aggregateOperation[R](bsonPipeline), readPreference, executor)
+    execute(aggregateOperation[R](bsonPipeline))
+
+  private def execute[R: Codec](operation: AggregateOperation[R]): OperationIterable[R] =
+    OperationIterable(operation, readPreference, executor)
 
   private def aggregateOperation[R](bsonPipeline: List[BsonDocument])(implicit c: Codec[R]) =
     AggregateOperation[R](namespace, bsonPipeline, c, maxTimeMS, allowDiskUse, batchSize, useCursor)

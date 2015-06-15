@@ -18,8 +18,11 @@ trait MongoIterable {
   def foreach[T](f: T => Unit)(implicit r: Reader[T]): Unit =
     rawForeach((r.read _) andThen f)(r.codec)
 
-  def cursor[T](batchSize: Option[Int] = None)(implicit r: Reader[T]): Observable[T] =
-    rawCursor(batchSize)(r.codec).map(r.read)
+  def cursor[T]()(implicit r: Reader[T]): Observable[T] =
+    rawCursor()(r.codec).map(r.read)
+
+  def cursor[T](batchSize: Int)(implicit r: Reader[T]): Observable[List[T]] =
+    rawCursor(batchSize)(r.codec).map(_.map(r.read))
 
   def collect[T]()(implicit r: Reader[T]): Future[List[T]] =
     rawCollect()(r.codec).map(_.map(r.read))
@@ -30,7 +33,9 @@ trait MongoIterable {
 
   protected def rawForeach[T: Codec](f: T => Unit): Unit
 
-  protected def rawCursor[T: Codec](batchSize: Option[Int] = None): Observable[T]
+  protected def rawCursor[T: Codec](): Observable[T]
+
+  protected def rawCursor[T: Codec](batchSize: Int): Observable[List[T]]
 
   protected def rawCollect[T: Codec](): Future[List[T]]
 }

@@ -34,8 +34,11 @@ private[client] case class FindIterable[T: Encoder](
   override protected def rawForeach[R: Codec](f: R => Unit) =
     execute.foreach(f)
 
-  override protected def rawCursor[R: Codec](batchSize: Option[Int]) =
-    execute.cursor(batchSize)
+  override protected def rawCursor[R: Codec]() =
+    execute.cursor()
+
+  override protected def rawCursor[R: Codec](batchSize: Int) =
+    execute(queryOperation[R]().copy(batchSize = batchSize)).cursor(batchSize)
 
   override protected def rawCollect[R: Codec]() =
     execute[R].collect()

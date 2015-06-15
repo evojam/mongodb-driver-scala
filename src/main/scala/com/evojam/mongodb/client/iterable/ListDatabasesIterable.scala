@@ -26,7 +26,10 @@ private[client] case class ListDatabasesIterable(
   override protected def rawForeach[T: Codec](f: T => Unit) =
     executedOperation.foreach(f)
 
-  override protected def rawCursor[T: Codec](batchSize: Option[Int]) =
+  override protected def rawCursor[T: Codec]() =
+    executedOperation.cursor()
+
+  override protected def rawCursor[T: Codec](batchSize: Int) =
     executedOperation.cursor(batchSize)
 
   override protected def rawCollect[T: Codec]() =

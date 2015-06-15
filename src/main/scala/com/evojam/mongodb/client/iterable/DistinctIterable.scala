@@ -35,7 +35,10 @@ private[client] case class DistinctIterable[T: Encoder](
   override protected def rawForeach[R: Codec](f: R => Unit) =
     execute.foreach(f)
 
-  override protected def rawCursor[R: Codec](batchSize: Option[Int] = None) =
+  override protected def rawCursor[R: Codec]() =
+    execute.cursor()
+
+  override protected def rawCursor[R: Codec](batchSize: Int) =
     execute.cursor(batchSize)
 
   override protected def rawCollect[R: Codec]() =
