@@ -21,39 +21,30 @@ trait AsyncEnriched {
 
     def asObservable: Observable[T] =
       Observable[T](subscriber =>
-        wrapped.next(new SingleResultCallback[java.util.List[T]] {
-          override def onResult(result: java.util.List[T], t: Throwable) =
-            if(t == null) {
-              Option(result)
-                .foreach(_.foreach(subscriber.onNext))
-              subscriber.onCompleted()
-              wrapped.close()
-            } else {
-              subscriber.onError(t)
-            }
-        }))
+        wrapped.next(onNextCallback(subscriber, _.foreach(subscriber.onNext))))
 
     def asBatchObservable(batchSize: Int): Observable[List[T]] = {
-      def nextCallback(subscriber: Subscriber[List[T]]): SingleResultCallback[java.util.List[T]] =
-        new SingleResultCallback[java.util.List[T]] {
-          override def onResult(result: java.util.List[T], t: Throwable) = {
-            if (t == null) {
-              Option(result)
-                .foreach(res => subscriber.onNext(res.toList))
-              if (!wrapped.isClosed()) {
-                wrapped.next(nextCallback(subscriber))
-              } else {
-                subscriber.onCompleted()
-              }
-            } else {
-              subscriber.onError(t)
-              wrapped.close()
-            }
-        }
-      }
       wrapped.setBatchSize(batchSize)
-      Observable[List[T]](subscriber => wrapped.next(nextCallback(subscriber)))
+      Observable[List[T]](subscriber =>
+        wrapped.next(onNextCallback(subscriber, chunk => subscriber.onNext(chunk.toList))))
     }
 
+    private def onNextCallback[R](
+      subscriber: Subscriber[R],
+      f: java.util.List[T] => Unit): SingleResultCallback[java.util.List[T]] =
+      new SingleResultCallback[java.util.List[T]] {
+        override def onResult(result: java.util.List[T], t: Throwable) =
+          if (t == null) {
+            Option(result).foreach(f)
+            if (!wrapped.isClosed()) {
+              wrapped.next(onNextCallback(subscriber, f))
+            } else {
+              subscriber.onCompleted()
+            }
+          } else {
+            subscriber.onError(t)
+            wrapped.close()
+          }
+      }
   }
 }
