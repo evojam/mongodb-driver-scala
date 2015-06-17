@@ -6,16 +6,16 @@ import scala.concurrent.Future
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
-import com.mongodb.client.model.CreateCollectionOptions
-import com.mongodb.operation.CommandReadOperation
-import com.mongodb.operation.CommandWriteOperation
+import com.mongodb.operation._
 import org.bson.BsonDocument
+import org.bson.Document
 import org.bson.codecs.Codec
 import org.bson.codecs.Encoder
 
 import com.evojam.mongodb.client.codec.Codecs._
 import com.evojam.mongodb.client.iterable.ListCollectionsIterable
 import com.evojam.mongodb.client.iterable.MongoIterable
+import com.evojam.mongodb.client.model.options.CreateCollectionOptions
 import com.evojam.mongodb.client.util.BsonUtil
 
 class MongoDatabase(
@@ -69,8 +69,26 @@ class MongoDatabase(
 
   def drop(): Future[Unit] = ???
 
-  def createCollection(collectionName: String): Future[Unit] = ???
+  def createCollection(collectionName: String): Future[Unit] =
+    createCollection(collectionName, CreateCollectionOptions())
 
-  def createCollection(collectionName: String, options: CreateCollectionOptions): Future[Unit] = ???
+  def createCollection(
+    collectionName: String,
+    options: CreateCollectionOptions): Future[Unit] =
+    createCollection[Document](collectionName, options, None)
 
+  def createCollection[T: Codec](
+    collectionName: String,
+    options: CreateCollectionOptions,
+    storageEngineOptions: Option[T]): Future[Unit] = {
+    val opts = new CreateCollectionOperation(name, collectionName)
+      .capped(options.capped)
+      .sizeInBytes(options.size)
+      .autoIndex(options.autoIndex)
+      .maxDocuments(options.maxDocuments)
+      .usePowerOf2Sizes(options.usePowerOf2Sizes)
+    storageEngineOptions.map(storageOptions =>
+      opts.storageEngineOptions(BsonUtil.toBson(storageOptions)))
+    executor.executeAsync(opts).toBlocking.toFuture.map(_ => ())
+  }
 }

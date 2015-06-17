@@ -1,12 +1,15 @@
 package com.evojam.mongodb.client.integration
 
 import scala.collection.JavaConversions._
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 
 import org.bson._
 import org.specs2.mutable.Specification
 
 import com.evojam.mongodb.client.MongoClients
 import com.evojam.mongodb.client.codec.Codecs._
+import com.evojam.mongodb.client.model.options.CreateCollectionOptions
 
 class MongoDatabaseSpec extends Specification {
 
@@ -14,6 +17,7 @@ class MongoDatabaseSpec extends Specification {
 
   "MongoDatabase" should {
     val db = MongoClients.create().database("foo")
+    val collectionName = "barCollection"
 
     val insertCommand =
       new BsonDocument()
@@ -38,6 +42,28 @@ class MongoDatabaseSpec extends Specification {
       res must not be empty.await
       res.map(_.get("dropped")) must be_==(new BsonString("foo")).await
       res.map(_.get("ok")) must be_==(new BsonDouble(1.0)).await
+    }
+
+    "create collection with helper method" in {
+      Await.ready(db.collection(collectionName).drop(), Duration.Inf)
+
+      val res = db.createCollection(collectionName)
+        .flatMap(_ => db.listCollectionNames())
+        .map(_.contains(collectionName))
+
+      res must beTrue.await
+    }
+
+    "create capped collection with helper method" in {
+      Await.ready(db.collection(collectionName).drop(), Duration.Inf)
+
+      val res = db.createCollection(
+        collectionName,
+        CreateCollectionOptions(capped = true, size = 1024))
+        .flatMap(_ => db.listCollectionNames())
+        .map(_.contains(collectionName))
+
+      res must beTrue.await
     }
   }
 }
