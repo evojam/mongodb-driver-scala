@@ -13,8 +13,7 @@ import org.bson.codecs.Codec
 import org.bson.codecs.Encoder
 
 import com.evojam.mongodb.client.codec.Codecs._
-import com.evojam.mongodb.client.iterable.ListCollectionsIterable
-import com.evojam.mongodb.client.iterable.MongoIterable
+import com.evojam.mongodb.client.iterable._
 import com.evojam.mongodb.client.model.options.CreateCollectionOptions
 import com.evojam.mongodb.client.util.BsonUtil
 
@@ -67,7 +66,9 @@ class MongoDatabase(
       .toBlocking.toFuture
   }
 
-  def drop(): Future[Unit] = ???
+  def drop(): Future[Unit] =
+    executor.executeAsync(new DropDatabaseOperation(name))
+      .toBlocking.toFuture.map(_ => ())
 
   def createCollection(collectionName: String): Future[Unit] =
     createCollection(collectionName, CreateCollectionOptions())
