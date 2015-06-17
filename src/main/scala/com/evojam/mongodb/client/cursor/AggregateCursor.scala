@@ -1,4 +1,4 @@
-package com.evojam.mongodb.client.iterable
+package com.evojam.mongodb.client.cursor
 
 import scala.concurrent.Future
 
@@ -13,7 +13,7 @@ import com.evojam.mongodb.client.ObservableOperationExecutor
 import com.evojam.mongodb.client.util.BsonUtil
 import com.evojam.mongodb.client.model.operation.AggregateOperation
 
-private[client] case class AggregateIterable[T: Encoder](
+private[client] case class AggregateCursor[T: Encoder](
   pipeline: List[T],
   namespace: MongoNamespace,
   readPreference: ReadPreference,
@@ -21,7 +21,7 @@ private[client] case class AggregateIterable[T: Encoder](
   allowDiskUse: Option[Boolean] = None,
   batchSize: Option[Int] = None,
   useCursor: Option[Boolean] = None,
-  maxTimeMS: Option[Long] = None) extends MongoIterable {
+  maxTimeMS: Option[Long] = None) extends Cursor {
 
   require(pipeline != null, "pipeline cannot be null")
   require(!pipeline.isEmpty, "pipeline cannot be empty")
@@ -42,23 +42,23 @@ private[client] case class AggregateIterable[T: Encoder](
   override protected def rawForeach[R: Codec](f: R => Unit) =
     execute().foreach(f)
 
-  override protected def rawCursor[R: Codec]() =
-    execute().cursor()
+  override protected def rawObservable[R: Codec]() =
+    execute().observable()
 
-  override protected def rawCursor[R: Codec](batchSize: Int) =
+  override protected def rawObservable[R: Codec](batchSize: Int) =
     execute(aggregateOperation[R](bsonPipeline).copy(batchSize = Some(batchSize)))
-      .cursor(batchSize)
+      .observable(batchSize)
 
   override protected def rawCollect[R: Codec]() =
     execute().collect()
 
   def toCollection(): Future[Unit] = ???
 
-  private def execute[R: Codec](): OperationIterable[R] =
+  private def execute[R: Codec](): OperationCursor[R] =
     execute(aggregateOperation[R](bsonPipeline))
 
-  private def execute[R: Codec](operation: AggregateOperation[R]): OperationIterable[R] =
-    OperationIterable(operation, readPreference, executor)
+  private def execute[R: Codec](operation: AggregateOperation[R]): OperationCursor[R] =
+    OperationCursor(operation, readPreference, executor)
 
   private def aggregateOperation[R](bsonPipeline: List[BsonDocument])(implicit c: Codec[R]) =
     AggregateOperation[R](namespace, bsonPipeline, c, maxTimeMS, allowDiskUse, batchSize, useCursor)

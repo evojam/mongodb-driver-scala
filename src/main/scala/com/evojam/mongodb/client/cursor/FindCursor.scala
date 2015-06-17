@@ -1,4 +1,4 @@
-package com.evojam.mongodb.client.iterable
+package com.evojam.mongodb.client.cursor
 
 import java.util.concurrent.TimeUnit
 
@@ -12,12 +12,12 @@ import com.evojam.mongodb.client.ObservableOperationExecutor
 import com.evojam.mongodb.client.model.operation.FindOperation
 import com.evojam.mongodb.client.model.options.FindOptions
 
-private[client] case class FindIterable[T: Encoder](
+private[client] case class FindCursor[T: Encoder](
   filter: Option[T],
   findOptions: FindOptions[T],
   namespace: MongoNamespace,
   readPreference: ReadPreference,
-  executor: ObservableOperationExecutor) extends MongoIterable {
+  executor: ObservableOperationExecutor) extends Cursor {
 
   require(filter != null, "filter cannot be null")
   require(findOptions != null, "findOptions cannot be null")
@@ -34,20 +34,20 @@ private[client] case class FindIterable[T: Encoder](
   override protected def rawForeach[R: Codec](f: R => Unit) =
     execute.foreach(f)
 
-  override protected def rawCursor[R: Codec]() =
-    execute.cursor()
+  override protected def rawObservable[R: Codec]() =
+    execute.observable()
 
-  override protected def rawCursor[R: Codec](batchSize: Int) =
-    execute(queryOperation[R]().copy(batchSize = batchSize)).cursor(batchSize)
+  override protected def rawObservable[R: Codec](batchSize: Int) =
+    execute(queryOperation[R]().copy(batchSize = batchSize)).observable(batchSize)
 
   override protected def rawCollect[R: Codec]() =
     execute[R].collect()
 
-  private def execute[R: Codec]: OperationIterable[R] =
+  private def execute[R: Codec]: OperationCursor[R] =
     execute(queryOperation[R])
 
-  private def execute[R: Codec](fo: FindOperation[T, R]): OperationIterable[R] =
-    OperationIterable(fo, readPreference, executor)
+  private def execute[R: Codec](fo: FindOperation[T, R]): OperationCursor[R] =
+    OperationCursor(fo, readPreference, executor)
 
   private def queryOperation[R]()(implicit c: Codec[R]) =
     FindOperation[T, R](
@@ -69,47 +69,47 @@ private[client] case class FindIterable[T: Encoder](
       slaveOk = readPreference.isSlaveOk)
 
   def filter(filter: T) =
-    FindIterable[T](Option(filter), findOptions, namespace, readPreference, executor)
+    FindCursor[T](Option(filter), findOptions, namespace, readPreference, executor)
 
   def limit(limit: Int) =
-    FindIterable[T](filter, findOptions.copy(limit = limit), namespace, readPreference, executor)
+    FindCursor[T](filter, findOptions.copy(limit = limit), namespace, readPreference, executor)
 
   def skip(skip: Int) =
-    FindIterable[T](filter, findOptions.copy(skip = skip), namespace, readPreference, executor)
+    FindCursor[T](filter, findOptions.copy(skip = skip), namespace, readPreference, executor)
 
   def maxTime(maxTime: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS) =
-    FindIterable[T](filter, findOptions.copy(maxTime = maxTime, maxTimeUnit = timeUnit),
+    FindCursor[T](filter, findOptions.copy(maxTime = maxTime, maxTimeUnit = timeUnit),
       namespace, readPreference, executor)
 
   def modifiers(modifiers: T) =
-    FindIterable[T](filter, findOptions.copy(modifiers = Option(modifiers)),
+    FindCursor[T](filter, findOptions.copy(modifiers = Option(modifiers)),
       namespace, readPreference, executor)
 
   def projection(projection: T) =
-    FindIterable[T](filter, findOptions.copy(projection = Option(projection)),
+    FindCursor[T](filter, findOptions.copy(projection = Option(projection)),
       namespace, readPreference, executor)
 
   def sort(sort: T) =
-    FindIterable[T](filter, findOptions.copy(sort = Option(sort)),
+    FindCursor[T](filter, findOptions.copy(sort = Option(sort)),
       namespace, readPreference, executor)
 
   def noCursorTimeout(noCursorTimeout: Boolean) =
-    FindIterable[T](filter, findOptions.copy(noCursorTimeout = noCursorTimeout),
+    FindCursor[T](filter, findOptions.copy(noCursorTimeout = noCursorTimeout),
       namespace, readPreference, executor)
 
   def oplogRelay(oplogRelay: Boolean) =
-    FindIterable[T](filter, findOptions.copy(oplogRelay = oplogRelay),
+    FindCursor[T](filter, findOptions.copy(oplogRelay = oplogRelay),
       namespace, readPreference, executor)
 
   def partial(partial: Boolean) =
-    FindIterable[T](filter, findOptions.copy(partial = partial),
+    FindCursor[T](filter, findOptions.copy(partial = partial),
       namespace, readPreference, executor)
 
   def cursorType(cursorType: CursorType) =
-    FindIterable[T](filter, findOptions.copy(cursorType = cursorType),
+    FindCursor[T](filter, findOptions.copy(cursorType = cursorType),
       namespace, readPreference, executor)
 
   def batchSize(batchSize: Int) =
-    FindIterable[T](filter, findOptions.copy(batchSize = batchSize),
+    FindCursor[T](filter, findOptions.copy(batchSize = batchSize),
       namespace, readPreference, executor)
 }

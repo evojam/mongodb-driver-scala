@@ -16,7 +16,7 @@ import org.bson.BsonDocument
 import org.bson.codecs.Codec
 
 import com.evojam.mongodb.client.codec.{ Reader, Codecs, Writer }
-import com.evojam.mongodb.client.iterable._
+import com.evojam.mongodb.client.cursor._
 import com.evojam.mongodb.client.model.IndexModel
 
 trait MongoCollection {
@@ -32,17 +32,17 @@ trait MongoCollection {
 
   def count[T: Codec](filter: T, options: CountOptions): Future[Long]
 
-  def find(): FindIterable[BsonDocument] =
+  def find(): FindCursor[BsonDocument] =
     find[BsonDocument](new BsonDocument())(Codecs.bsonDocumentCodec)
 
-  def find[T: Codec](filter: T): FindIterable[T]
+  def find[T: Codec](filter: T): FindCursor[T]
 
-  def distinct(fieldName: String): DistinctIterable[BsonDocument] =
+  def distinct(fieldName: String): DistinctCursor[BsonDocument] =
     distinct[BsonDocument](fieldName, new BsonDocument())(Codecs.bsonDocumentCodec)
 
-  def distinct[T: Codec](fieldName: String, filter: T): DistinctIterable[T]
+  def distinct[T: Codec](fieldName: String, filter: T): DistinctCursor[T]
 
-  def aggregate[T: Codec](pipeline: List[T]): AggregateIterable[T]
+  def aggregate[T: Codec](pipeline: List[T]): AggregateCursor[T]
 
   protected def rawInsert[T: Codec](document: T): Future[Unit]
 
@@ -83,7 +83,7 @@ trait MongoCollection {
 
   def createIndexes[T: Codec](indexes: List[IndexModel[T]]): Future[Unit]
 
-  def listIndexes(): ListIndexesIterable
+  def listIndexes(): ListIndexesCursor
 
   def dropIndex(indexName: String): Future[Unit]
 

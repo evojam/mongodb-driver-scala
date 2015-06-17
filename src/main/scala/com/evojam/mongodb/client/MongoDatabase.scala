@@ -13,7 +13,7 @@ import org.bson.codecs.Codec
 import org.bson.codecs.Encoder
 
 import com.evojam.mongodb.client.codec.Codecs._
-import com.evojam.mongodb.client.iterable._
+import com.evojam.mongodb.client.cursor._
 import com.evojam.mongodb.client.model.options.CreateCollectionOptions
 import com.evojam.mongodb.client.util.BsonUtil
 
@@ -35,15 +35,15 @@ class MongoDatabase(
     new MongoDatabase(name, readPref, writeConcern, executor)
 
   def listCollectionNames(): Future[List[String]] =
-    ListCollectionsIterable[BsonDocument](
+    ListCollectionsCursor[BsonDocument](
       name,
       ReadPreference.primary(),
       executor)
       .collect[BsonDocument]()
       .map(_.map(_.getString("name").getValue))
 
-  def listCollections[T: Encoder](): MongoIterable =
-    ListCollectionsIterable[T](name, ReadPreference.primary(), executor)
+  def listCollections[T: Encoder](): Cursor =
+    ListCollectionsCursor[T](name, ReadPreference.primary(), executor)
 
   def collection(collectionName: String): MongoCollection =
     MongoCollectionImpl(new MongoNamespace(name, collectionName), readPref, writeConcern, executor)

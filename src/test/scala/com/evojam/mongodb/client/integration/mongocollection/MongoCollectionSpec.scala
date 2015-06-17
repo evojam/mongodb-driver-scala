@@ -157,7 +157,7 @@ class MongoCollectionSpec extends Specification with DocumentGenerator {
     "return elements one by one from cursor" in {
       val res = collection
         .find()
-        .cursor[Document]()
+        .observable[Document]()
 
       val check = res.zip(docs).map {
         case (docDb, docCol) =>
@@ -175,7 +175,7 @@ class MongoCollectionSpec extends Specification with DocumentGenerator {
       val chunkSize = 3
       val res = collection
         .find()
-        .cursor[Document](chunkSize)
+        .observable[Document](chunkSize)
         .toList.toBlocking.toFuture
         .map(_.map(_.map(_.get(propName))))
 
@@ -189,7 +189,7 @@ class MongoCollectionSpec extends Specification with DocumentGenerator {
         .database("foo")
         .collection("emptyone")
         .find()
-        .cursor[Document](3)
+        .observable[Document](3)
         .toList.toBlocking.toFuture
 
       res must haveSize[List[List[Document]]](0).await

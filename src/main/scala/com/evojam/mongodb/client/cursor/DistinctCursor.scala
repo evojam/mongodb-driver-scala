@@ -1,4 +1,4 @@
-package com.evojam.mongodb.client.iterable
+package com.evojam.mongodb.client.cursor
 
 import java.util.concurrent.TimeUnit
 
@@ -12,13 +12,13 @@ import org.bson.codecs.Encoder
 import com.evojam.mongodb.client.ObservableOperationExecutor
 import com.evojam.mongodb.client.model.DistinctOperation
 
-private[client] case class DistinctIterable[T: Encoder](
+private[client] case class DistinctCursor[T: Encoder](
   fieldName: String,
   filter: Option[T],
   namespace: MongoNamespace,
   readPreference: ReadPreference,
   executor: ObservableOperationExecutor,
-  private val maxTimeMS: Option[Long] = None) extends MongoIterable {
+  private val maxTimeMS: Option[Long] = None) extends Cursor {
 
   require(fieldName != null, "fieldName cannot be null")
   require(filter != null, "filter cannot be null")
@@ -35,11 +35,11 @@ private[client] case class DistinctIterable[T: Encoder](
   override protected def rawForeach[R: Codec](f: R => Unit) =
     execute.foreach(f)
 
-  override protected def rawCursor[R: Codec]() =
-    execute.cursor()
+  override protected def rawObservable[R: Codec]() =
+    execute.observable()
 
-  override protected def rawCursor[R: Codec](batchSize: Int) =
-    execute.cursor(batchSize)
+  override protected def rawObservable[R: Codec](batchSize: Int) =
+    execute.observable(batchSize)
 
   override protected def rawCollect[R: Codec]() =
     execute[R].collect
@@ -51,11 +51,11 @@ private[client] case class DistinctIterable[T: Encoder](
     this.copy(maxTimeMS = Some(TimeUnit.MILLISECONDS.convert(maxTime, timeUnit)))
   }
 
-  private def execute[R: Codec]: OperationIterable[R] =
+  private def execute[R: Codec]: OperationCursor[R] =
     execute(distinctOperation[R])
 
-  private def execute[R](operation: DistinctOperation[T, R])(implicit c: Codec[R]): OperationIterable[R] =
-    OperationIterable(operation, readPreference, executor)
+  private def execute[R](operation: DistinctOperation[T, R])(implicit c: Codec[R]): OperationCursor[R] =
+    OperationCursor(operation, readPreference, executor)
 
   private def distinctOperation[R]()(implicit c: Codec[R]) =
     DistinctOperation[T, R](namespace, fieldName, c, filter, maxTimeMS)

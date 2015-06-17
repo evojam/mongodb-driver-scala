@@ -1,4 +1,4 @@
-package com.evojam.mongodb.client.iterable
+package com.evojam.mongodb.client.cursor
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -13,12 +13,13 @@ import rx.lang.scala.Observable
 import com.evojam.mongodb.client.ObservableOperationExecutor
 import com.evojam.mongodb.client.util.AsyncEnriched
 
-private[client] case class OperationIterable[R: Codec](
+private[client] case class OperationCursor[R: Codec](
   operation: AsyncReadOperation[_ <: AsyncBatchCursor[R]],
   readPreference: ReadPreference,
   executor: ObservableOperationExecutor) extends AsyncEnriched {
 
-  private lazy val observable = executor.executeAsync(operation, readPreference).flatMap(_.asObservable)
+  private lazy val executedObservable =
+    executor.executeAsync(operation, readPreference).flatMap(_.asObservable)
 
   def head: Future[R] = headOpt.map(_.get)
 
@@ -29,13 +30,13 @@ private[client] case class OperationIterable[R: Codec](
       .toList
       .map(_.headOption).toBlocking.toFuture
 
-  def foreach(f: R => Unit): Unit = observable.foreach(f)
+  def foreach(f: R => Unit): Unit = executedObservable.foreach(f)
 
-  def cursor(): Observable[R] = observable
+  def observable(): Observable[R] = executedObservable
 
-  def cursor(batchSize: Int): Observable[List[R]] =
+  def observable(batchSize: Int): Observable[List[R]] =
     executor.executeAsync(operation, readPreference)
       .flatMap(_.asBatchObservable(batchSize))
 
-  def collect(): Future[List[R]] = observable.toList.toBlocking.toFuture
+  def collect(): Future[List[R]] = executedObservable.toList.toBlocking.toFuture
 }

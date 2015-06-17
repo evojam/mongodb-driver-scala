@@ -25,7 +25,7 @@ import com.mongodb.operation.{ FindAndUpdateOperation, DropCollectionOperation, 
 import org.bson.{ BsonDocument, Document }
 import org.bson.codecs.{ BsonDocumentCodec, DocumentCodec, Codec, CollectibleCodec }
 
-import com.evojam.mongodb.client.iterable._
+import com.evojam.mongodb.client.cursor._
 import com.evojam.mongodb.client.model.IndexModel
 import com.evojam.mongodb.client.model.WriteOperation
 import com.evojam.mongodb.client.model.operation.CountOperation
@@ -59,13 +59,13 @@ case class MongoCollectionImpl(
       readPreference).toBlocking.toFuture.map(_.longValue)
 
   override def find[T: Codec](filter: T) =
-    FindIterable(Option(filter), FindOptions(), namespace, readPreference, executor)
+    FindCursor(Option(filter), FindOptions(), namespace, readPreference, executor)
 
   override def distinct[T: Codec](fieldName: String, filter: T) =
-    DistinctIterable(fieldName, Option(filter), namespace, readPreference, executor)
+    DistinctCursor(fieldName, Option(filter), namespace, readPreference, executor)
 
   override def aggregate[T: Codec](pipeline: List[T]) =
-    AggregateIterable(pipeline, namespace, readPreference, executor)
+    AggregateCursor(pipeline, namespace, readPreference, executor)
 
   // TODO: MapReduce
   // TODO: Bulk write/read
@@ -132,7 +132,7 @@ case class MongoCollectionImpl(
       .toBlocking.toFuture.map(_ => ())
 
   override def listIndexes() =
-    ListIndexesIterable(namespace, readPreference, executor = executor)
+    ListIndexesCursor(namespace, readPreference, executor = executor)
 
   override def dropIndex(indexName: String) =
     executor.executeAsync(DropIndexOperation(namespace, indexName))

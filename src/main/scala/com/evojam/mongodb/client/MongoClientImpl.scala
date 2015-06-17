@@ -6,7 +6,7 @@ import com.mongodb.connection.Cluster
 import org.bson.BsonDocument
 
 import com.evojam.mongodb.client.codec.Codecs._
-import com.evojam.mongodb.client.iterable.ListDatabasesIterable
+import com.evojam.mongodb.client.cursor.ListDatabasesCursor
 
 private[client] class MongoClientImpl(
   cluster: Cluster,
@@ -22,7 +22,7 @@ private[client] class MongoClientImpl(
     new MongoDatabase(name, settings.readPreference, settings.writeConcern, executor)
 
   override def databaseNames() =
-    ListDatabasesIterable(settings.codecRegistry, settings.readPreference, executor)
+    ListDatabasesCursor(settings.codecRegistry, settings.readPreference, executor)
       .collect[BsonDocument]().map(_.map(_.getString("name").getValue))
 
   override def close() = cluster.close()
