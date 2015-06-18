@@ -65,5 +65,15 @@ class MongoDatabaseSpec extends Specification {
 
       res must beTrue.await
     }
+
+    "drop database with helper method" in {
+      val res = db
+        .runCommand(insertCommand)
+        .flatMap(_ => db.drop())
+        .flatMap(_ => MongoClients.create.databaseNames())
+        .map(_.contains("foo"))
+
+      res must be_==(false).await
+    }
   }
 }
