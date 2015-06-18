@@ -28,6 +28,8 @@ class MongoCollectionSpec extends Specification with DocumentGenerator {
         .headOption.getOrElse(throw new Exception("Document must have at least one property.")))
       .getOrElse(throw new Exception("There must be at least one document generated."))
 
+    val timeout = 10
+
     def randomDoc() =
       docs(Random.nextInt(docs.size))
 
@@ -64,13 +66,13 @@ class MongoCollectionSpec extends Specification with DocumentGenerator {
         .insertAll(docs)
         .flatMap(_ => collection.count())
 
-      res must be_==(docs.size).await(100)
+      res must be_==(docs.size).await(timeout)
     }
 
     "find all documents in the collection" in {
       collection
         .find()
-        .collect[Document] must haveSize[List[Document]](docs.size).await
+        .collect[Document] must haveSize[List[Document]](docs.size).await(timeout)
     }
 
     "find particular document from the collection" in {
@@ -162,7 +164,7 @@ class MongoCollectionSpec extends Specification with DocumentGenerator {
           (docDb.get(propName), docCol.get(propName))
       }.toList.toBlocking.toFuture
 
-      res.size.toBlocking.toFuture must be_==(docs.size).await
+      res.size.toBlocking.toFuture must be_==(docs.size).await(timeout)
 
       check.map(_.forall {
         case (p1, p2) => p1 == p2
@@ -179,7 +181,7 @@ class MongoCollectionSpec extends Specification with DocumentGenerator {
 
       val docVals = docs.map(_.get(propName))
 
-      res must haveSize[List[List[Object]]](Math.ceil(docs.size.toDouble / chunkSize).toInt).await
+      res must haveSize[List[List[Object]]](Math.ceil(docs.size.toDouble / chunkSize).toInt).await(timeout)
     }
 
     "return empty batch cursor from empty collection" in {
