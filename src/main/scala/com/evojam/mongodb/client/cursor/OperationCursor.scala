@@ -18,25 +18,30 @@ private[client] case class OperationCursor[R: Codec](
   readPreference: ReadPreference,
   executor: ObservableOperationExecutor) extends AsyncEnriched {
 
-  private lazy val executedObservable =
-    executor.executeAsync(operation, readPreference).flatMap(_.asObservable)
+  def head(): Future[R] =
+    headOpt().map(_.get)
 
-  def head: Future[R] = headOpt.map(_.get)
-
-  def headOpt: Future[Option[R]] =
+  def headOpt(): Future[Option[R]] =
     executor.executeAsync(operation, readPreference)
       .flatMap(_.takeFirstAsObservable)
       .first
       .toList
       .map(_.headOption).toBlocking.toFuture
 
-  def foreach(f: R => Unit): Unit = executedObservable.foreach(f)
+  def foreach(f: R => Unit): Unit =
+    execute().foreach(f)
 
-  def observable(): Observable[R] = executedObservable
+  def observable(): Observable[R] =
+    execute()
 
   def observable(batchSize: Int): Observable[List[R]] =
     executor.executeAsync(operation, readPreference)
       .flatMap(_.asBatchObservable(batchSize))
 
-  def collect(): Future[List[R]] = executedObservable.toList.toBlocking.toFuture
+  def collect(): Future[List[R]] =
+    execute().toList.toBlocking.toFuture
+
+  private def execute(): Observable[R] =
+    executor.executeAsync(operation, readPreference)
+      .flatMap(_.asObservable)
 }
