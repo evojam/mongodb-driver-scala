@@ -22,7 +22,7 @@ private[client] class MongoClientImpl(
     new MongoDatabase(name, settings.readPreference, settings.writeConcern, executor)
 
   override def databaseNames() =
-    ListDatabasesCursor(settings.codecRegistry, settings.readPreference, executor)
+    ListDatabasesCursor(settings.readPreference, executor)
       .collect[BsonDocument]().map(_.map(_.getString("name").getValue))
 
   override def close() = cluster.close()

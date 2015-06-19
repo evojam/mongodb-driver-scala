@@ -1,8 +1,7 @@
 package com.evojam.mongodb.client.cursor
 
 import com.mongodb.ReadPreference
-import org.bson.codecs.Codec
-import org.bson.codecs.Encoder
+import org.bson.codecs.{ Codec, Encoder }
 
 import com.evojam.mongodb.client.ObservableOperationExecutor
 import com.evojam.mongodb.client.model.operation.ListCollectionOperation
@@ -15,23 +14,32 @@ private[client] case class ListCollectionsCursor[T: Encoder](
   maxTime: Option[Long] = None,
   batchSize: Option[Int] = None) extends Cursor {
 
+  require(dbName != null, "dbName cannot be null")
+  require(dbName.nonEmpty, "dbName cannot be empty")
+  require(readPreference != null, "readPreference cannot be null")
+  require(filter != null, "filter cannot be null")
+  require(maxTime != null, "maxTime cannot be null")
+  require(batchSize != null, "batchSize cannot be null")
+
   override protected def rawHead[R: Codec]() =
-    execute(queryOperation.copy(batchSize = Some(-1))).head
+    cursor(queryOperation.copy(batchSize = Some(-1)))
+      .head()
 
   override protected def rawHeadOpt[R: Codec]() =
-    execute(queryOperation.copy(batchSize = Some(-1))).headOpt
+    cursor(queryOperation.copy(batchSize = Some(-1)))
+      .headOpt()
 
   override protected def rawForeach[R: Codec](f: R => Unit) =
-    execute.foreach(f)
+    cursor().foreach(f)
 
   override protected def rawObservable[R: Codec]() =
-    execute.observable()
+    cursor().observable()
 
   override protected def rawObservable[R: Codec](batchSize: Int) =
-    execute.observable(batchSize)
+    cursor().observable(batchSize)
 
   override protected def rawCollect[R: Codec]() =
-    execute.collect()
+    cursor().collect()
 
   def filter(filter: T): ListCollectionsCursor[T] = {
     require(filter != null, "filter cannot be null")
@@ -48,10 +56,10 @@ private[client] case class ListCollectionsCursor[T: Encoder](
     this.copy(batchSize = Some(size))
   }
 
-  private def execute[R: Codec]: OperationCursor[R] =
-    execute(queryOperation[R])
+  private def cursor[R: Codec](): OperationCursor[R] =
+    cursor(queryOperation[R])
 
-  private def execute[R: Codec](lco: ListCollectionOperation[T, R]): OperationCursor[R] =
+  private def cursor[R: Codec](lco: ListCollectionOperation[T, R]): OperationCursor[R] =
     OperationCursor(lco, readPreference, executor)
 
   private def queryOperation[R]()(implicit c: Codec[R]) =

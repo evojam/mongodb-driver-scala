@@ -2,12 +2,9 @@ package com.evojam.mongodb.client.cursor
 
 import scala.concurrent.Future
 
-import com.mongodb.MongoNamespace
-import com.mongodb.ReadPreference
-import org.bson.BsonDocument
-import org.bson.BsonValue
-import org.bson.codecs.Codec
-import org.bson.codecs.Encoder
+import com.mongodb.{ MongoNamespace, ReadPreference }
+import org.bson.{ BsonDocument, BsonValue }
+import org.bson.codecs.{ Codec, Encoder }
 
 import com.evojam.mongodb.client.ObservableOperationExecutor
 import com.evojam.mongodb.client.util.BsonUtil
@@ -34,30 +31,30 @@ private[client] case class AggregateCursor[T: Encoder](
   require(maxTimeMS != null, "maxTimeMS cannot be null")
 
   override protected def rawHead[R: Codec]() =
-    execute().head
+    cursor().head()
 
   override protected def rawHeadOpt[R: Codec]() =
-    execute().headOpt
+    cursor().headOpt()
 
   override protected def rawForeach[R: Codec](f: R => Unit) =
-    execute().foreach(f)
+    cursor().foreach(f)
 
   override protected def rawObservable[R: Codec]() =
-    execute().observable()
+    cursor().observable()
 
   override protected def rawObservable[R: Codec](batchSize: Int) =
-    execute(aggregateOperation[R](bsonPipeline).copy(batchSize = Some(batchSize)))
+    cursor(aggregateOperation[R](bsonPipeline).copy(batchSize = Some(batchSize)))
       .observable(batchSize)
 
   override protected def rawCollect[R: Codec]() =
-    execute().collect()
+    cursor().collect()
 
   def toCollection(): Future[Unit] = ???
 
-  private def execute[R: Codec](): OperationCursor[R] =
-    execute(aggregateOperation[R](bsonPipeline))
+  private def cursor[R: Codec](): OperationCursor[R] =
+    cursor(aggregateOperation[R](bsonPipeline))
 
-  private def execute[R: Codec](operation: AggregateOperation[R]): OperationCursor[R] =
+  private def cursor[R: Codec](operation: AggregateOperation[R]): OperationCursor[R] =
     OperationCursor(operation, readPreference, executor)
 
   private def aggregateOperation[R](bsonPipeline: List[BsonDocument])(implicit c: Codec[R]) =

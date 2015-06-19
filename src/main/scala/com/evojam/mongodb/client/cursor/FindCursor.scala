@@ -3,10 +3,8 @@ package com.evojam.mongodb.client.cursor
 import java.util.concurrent.TimeUnit
 
 import com.mongodb.CursorType
-import com.mongodb.MongoNamespace
-import com.mongodb.ReadPreference
-import org.bson.codecs.Codec
-import org.bson.codecs.Encoder
+import com.mongodb.{ MongoNamespace, ReadPreference }
+import org.bson.codecs.{ Codec, Encoder }
 
 import com.evojam.mongodb.client.ObservableOperationExecutor
 import com.evojam.mongodb.client.model.operation.FindOperation
@@ -26,47 +24,25 @@ private[client] case class FindCursor[T: Encoder](
   require(executor != null, "executor cannt be null")
 
   override protected def rawHead[R: Codec]() =
-    execute[R](queryOperation[R].copy(batchSize = 0, limit = -1)).head
+    cursor(queryOperation[R].copy(batchSize = 0, limit = -1))
+      .head()
 
   override protected def rawHeadOpt[R: Codec]() =
-    execute[R](queryOperation[R].copy(batchSize = 0, limit = -1)).headOpt
+    cursor(queryOperation[R].copy(batchSize = 0, limit = -1))
+      .headOpt()
 
   override protected def rawForeach[R: Codec](f: R => Unit) =
-    execute.foreach(f)
+    cursor().foreach(f)
 
   override protected def rawObservable[R: Codec]() =
-    execute.observable()
+    cursor().observable()
 
   override protected def rawObservable[R: Codec](batchSize: Int) =
-    execute(queryOperation[R]().copy(batchSize = batchSize)).observable(batchSize)
+    cursor(queryOperation[R]().copy(batchSize = batchSize))
+      .observable(batchSize)
 
   override protected def rawCollect[R: Codec]() =
-    execute[R].collect()
-
-  private def execute[R: Codec]: OperationCursor[R] =
-    execute(queryOperation[R])
-
-  private def execute[R: Codec](fo: FindOperation[T, R]): OperationCursor[R] =
-    OperationCursor(fo, readPreference, executor)
-
-  private def queryOperation[R]()(implicit c: Codec[R]) =
-    FindOperation[T, R](
-      namespace = namespace,
-      decoder = c,
-      filter = filter,
-      batchSize = findOptions.batchSize,
-      skip = findOptions.skip,
-      limit = findOptions.limit,
-      maxTime = findOptions.maxTime,
-      maxTimeUnit = findOptions.maxTimeUnit,
-      modifiers = findOptions.modifiers,
-      projection = findOptions.projection,
-      sort = findOptions.sort,
-      cursorType = findOptions.cursorType,
-      noCursorTimeout = findOptions.noCursorTimeout,
-      oplogRelay = findOptions.oplogRelay,
-      partial = findOptions.partial,
-      slaveOk = readPreference.isSlaveOk)
+    cursor().collect()
 
   def filter(filter: T) =
     FindCursor[T](Option(filter), findOptions, namespace, readPreference, executor)
@@ -112,4 +88,29 @@ private[client] case class FindCursor[T: Encoder](
   def batchSize(batchSize: Int) =
     FindCursor[T](filter, findOptions.copy(batchSize = batchSize),
       namespace, readPreference, executor)
+
+  private def cursor[R: Codec](): OperationCursor[R] =
+    cursor(queryOperation[R])
+
+  private def cursor[R: Codec](fo: FindOperation[T, R]): OperationCursor[R] =
+    OperationCursor(fo, readPreference, executor)
+
+  private def queryOperation[R]()(implicit c: Codec[R]) =
+    FindOperation[T, R](
+      namespace = namespace,
+      decoder = c,
+      filter = filter,
+      batchSize = findOptions.batchSize,
+      skip = findOptions.skip,
+      limit = findOptions.limit,
+      maxTime = findOptions.maxTime,
+      maxTimeUnit = findOptions.maxTimeUnit,
+      modifiers = findOptions.modifiers,
+      projection = findOptions.projection,
+      sort = findOptions.sort,
+      cursorType = findOptions.cursorType,
+      noCursorTimeout = findOptions.noCursorTimeout,
+      oplogRelay = findOptions.oplogRelay,
+      partial = findOptions.partial,
+      slaveOk = readPreference.isSlaveOk)
 }

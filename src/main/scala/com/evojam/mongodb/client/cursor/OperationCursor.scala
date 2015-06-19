@@ -18,6 +18,10 @@ private[client] case class OperationCursor[R: Codec](
   readPreference: ReadPreference,
   executor: ObservableOperationExecutor) extends AsyncEnriched {
 
+  require(operation != null, "operation cannot be null")
+  require(readPreference != null, "readPreference cannot be null")
+  require(executor != null, "executor cannot be null")
+
   def head(): Future[R] =
     headOpt().map(_.get)
 

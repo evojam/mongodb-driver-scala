@@ -7,40 +7,41 @@ import scala.concurrent.duration.TimeUnit
 import com.mongodb.ReadPreference
 import com.mongodb.operation.ListDatabasesOperation
 import org.bson.codecs.Codec
-import org.bson.codecs.configuration.CodecRegistry
 
 import com.evojam.mongodb.client.ObservableOperationExecutor
 
 private[client] case class ListDatabasesCursor(
-  codecRegistry: CodecRegistry,
   readPreference: ReadPreference,
   executor: ObservableOperationExecutor,
   maxTimeMS: Long = 0) extends Cursor {
 
-  override protected def rawHead[T: Codec]() =
-    executedOperation.head
+  require(readPreference != null, "readPreference cannot be null")
+  require(executor != null, "executor cannot be null")
 
-  override protected def rawHeadOpt[T: Codec]() =
-    executedOperation.headOpt
+  override protected def rawHead[R: Codec]() =
+    cursor().head()
 
-  override protected def rawForeach[T: Codec](f: T => Unit) =
-    executedOperation.foreach(f)
+  override protected def rawHeadOpt[R: Codec]() =
+    cursor().headOpt()
 
-  override protected def rawObservable[T: Codec]() =
-    executedOperation.observable()
+  override protected def rawForeach[R: Codec](f: R => Unit) =
+    cursor().foreach(f)
 
-  override protected def rawObservable[T: Codec](batchSize: Int) =
-    executedOperation.observable(batchSize)
+  override protected def rawObservable[R: Codec]() =
+    cursor().observable()
 
-  override protected def rawCollect[T: Codec]() =
-    executedOperation.collect()
+  override protected def rawObservable[R: Codec](batchSize: Int) =
+    cursor().observable(batchSize)
+
+  override protected def rawCollect[R: Codec]() =
+    cursor().collect()
 
   def maxTime(maxTime: Long, timeUnit: TimeUnit): ListDatabasesCursor =
     this.copy(maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit))
 
-  private def createOperation[T]()(implicit c: Codec[T]): ListDatabasesOperation[T] =
-    new ListDatabasesOperation[T](c).maxTime(maxTimeMS, MILLISECONDS)
+  private def cursor[R: Codec]() =
+    OperationCursor(listDatabasesOperation, readPreference, executor)
 
-  private def executedOperation[T: Codec] =
-    OperationCursor(createOperation, readPreference, executor)
+  private def listDatabasesOperation[R]()(implicit c: Codec[R]): ListDatabasesOperation[R] =
+    new ListDatabasesOperation[R](c).maxTime(maxTimeMS, MILLISECONDS)
 }

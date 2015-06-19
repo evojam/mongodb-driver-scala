@@ -11,17 +11,21 @@ import com.evojam.mongodb.client.util.AsyncEnriched
 
 private[client] case class ResultCursor[R: Codec](wrapped: Observable[R]) extends AsyncEnriched {
 
-  def head: Future[R] = headOpt.map(_.get)
+  require(wrapped != null, "wrapped cannot be null")
 
-  def headOpt: Future[Option[R]] =
-    wrapped
-      .first
-      .toList
+  def head(): Future[R] =
+    headOpt().map(_.get)
+
+  def headOpt(): Future[Option[R]] =
+    wrapped.first.toList
       .map(_.headOption).toBlocking.toFuture
 
-  def foreach(f: R => Unit): Unit = wrapped.foreach(f)
+  def foreach(f: R => Unit): Unit =
+    wrapped.foreach(f)
 
-  def observable(batchSize: Option[Int]): Observable[R] = wrapped
+  def observable(batchSize: Option[Int]): Observable[R] =
+    wrapped
 
-  def collect(): Future[List[R]] = wrapped.toList.toBlocking.toFuture
+  def collect(): Future[List[R]] =
+    wrapped.toList.toBlocking.toFuture
 }
