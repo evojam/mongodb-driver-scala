@@ -2,22 +2,16 @@ package com.evojam.mongodb.client
 
 import scala.concurrent.Future
 
-import com.mongodb.MongoNamespace
-import com.mongodb.ReadPreference
-import com.mongodb.WriteConcern
-import com.mongodb.client.model.CountOptions
-import com.mongodb.client.model.IndexOptions
-import com.mongodb.client.model.InsertManyOptions
-import com.mongodb.client.model.RenameCollectionOptions
-import com.mongodb.client.model.UpdateOptions
+import com.mongodb.{MongoNamespace, ReadPreference, WriteConcern}
+import com.mongodb.client.model._
 import com.mongodb.client.result.DeleteResult
-import com.mongodb.client.result.UpdateResult
 import org.bson.BsonDocument
 import org.bson.codecs.Codec
 
-import com.evojam.mongodb.client.codec.{ Reader, Codecs, Writer }
+import com.evojam.mongodb.client.codec.{Codecs, Writer}
 import com.evojam.mongodb.client.cursor._
 import com.evojam.mongodb.client.model.IndexModel
+import com.evojam.mongodb.client.model.result.UpdateResult
 
 trait MongoCollection {
   def withReadPreference(readPreference: ReadPreference): MongoCollection
@@ -64,12 +58,12 @@ trait MongoCollection {
     filter: T,
     update: T,
     upsert: Boolean = false,
-    multi: Boolean = false): Future[UpdateResult]
+    multi: Boolean = false): Future[UpdateResult[T]]
 
   def upsert[T: Codec](
     filter: T,
     update: T,
-    multi: Boolean = false): Future[UpdateResult]
+    multi: Boolean = false): Future[UpdateResult[T]]
 
   def findAndModify[T: Codec](
     filter: T,

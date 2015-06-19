@@ -5,36 +5,21 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.language.implicitConversions
 
-import com.mongodb.MongoNamespace
-import com.mongodb.ReadPreference
-import com.mongodb.WriteConcern
-import com.mongodb.bulk.BulkWriteResult
-import com.mongodb.bulk.DeleteRequest
-import com.mongodb.bulk.IndexRequest
-import com.mongodb.bulk.InsertRequest
-import com.mongodb.bulk.UpdateRequest
-import com.mongodb.bulk.WriteRequest
-import com.mongodb.client.model.CountOptions
-import com.mongodb.client.model.IndexOptions
-import com.mongodb.client.model.InsertManyOptions
-import com.mongodb.client.model.RenameCollectionOptions
-import com.mongodb.client.model.UpdateOptions
+import com.mongodb._
+import com.mongodb.bulk._
+import com.mongodb.client.model._
 import com.mongodb.client.result.DeleteResult
-import com.mongodb.client.result.UpdateResult
-import com.mongodb.operation.{ FindAndUpdateOperation, DropCollectionOperation, RenameCollectionOperation }
-import org.bson.{ BsonDocument, Document }
-import org.bson.codecs.{ BsonDocumentCodec, DocumentCodec, Codec, CollectibleCodec }
+import com.mongodb.operation._
+import org.bson.codecs.Codec
 
+import com.evojam.mongodb.client.codec.Reader
 import com.evojam.mongodb.client.cursor._
-import com.evojam.mongodb.client.model.IndexModel
-import com.evojam.mongodb.client.model.WriteOperation
-import com.evojam.mongodb.client.model.operation.CountOperation
-import com.evojam.mongodb.client.model.operation.CreateIndexesOperation
-import com.evojam.mongodb.client.model.operation.DropIndexOperation
+import com.evojam.mongodb.client.model.{IndexModel, WriteOperation}
+import com.evojam.mongodb.client.model.operation.{CountOperation, CreateIndexesOperation, DropIndexOperation}
 import com.evojam.mongodb.client.model.options.FindOptions
+import com.evojam.mongodb.client.model.result.UpdateResult
 import com.evojam.mongodb.client.util.BsonUtil
 import com.evojam.mongodb.client.util.Conversions._
-import com.evojam.mongodb.client.codec.Reader
 
 case class MongoCollectionImpl(
   namespace: MongoNamespace,
@@ -84,8 +69,12 @@ case class MongoCollectionImpl(
   override def delete[T: Codec](filter: T, multi: Boolean) =
     executeWrite[DeleteResult](new DeleteRequest(BsonUtil.toBson(filter)))
 
-  override def update[T: Codec](filter: T, update: T, upsert: Boolean, multi: Boolean) =
-    executeWrite[UpdateResult](
+  override def update[T: Codec](
+    filter: T,
+    update: T,
+    upsert: Boolean = false,
+    multi: Boolean = false) =
+    executeWrite[UpdateResult[T]](
       new UpdateRequest(BsonUtil.toBson(filter), BsonUtil.toBson(update), WriteRequest.Type.UPDATE)
         .upsert(upsert)
         .multi(multi))

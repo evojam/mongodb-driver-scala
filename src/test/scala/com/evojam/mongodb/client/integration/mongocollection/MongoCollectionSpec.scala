@@ -10,7 +10,7 @@ import org.specs2.mutable.Specification
 
 import com.evojam.mongodb.client.MongoClients
 import com.evojam.mongodb.client.codec.Codecs._
-import com.evojam.mongodb.client.util.DocumentGenerator
+import com.evojam.mongodb.client.util.{BsonUtil, DocumentGenerator}
 
 class MongoCollectionSpec extends Specification with DocumentGenerator {
   sequential
@@ -83,6 +83,33 @@ class MongoCollectionSpec extends Specification with DocumentGenerator {
         .map(_.get(propName))
 
       res must be_==(doc.get(propName)).await
+    }
+
+    "update document" in {
+      val doc = randomDoc()
+      val newValue = "newValue!!!"
+      val oldValue = doc.get(propName)
+      val res = collection
+        .update(
+          doc,
+          new Document(
+            "$set",
+            new Document(propName, newValue)))
+        .map(_.acknowledged)
+
+      res must beFalse.await
+
+      val revertDoc = BsonUtil.copy(doc)
+      revertDoc.remove(propName)
+      val revertRes = collection
+        .update(
+          revertDoc,
+          new Document(
+            "$set",
+            new Document(propName, oldValue)))
+        .map(_.acknowledged)
+
+      revertRes must beFalse.await
     }
 
     "result to a single element list" in {

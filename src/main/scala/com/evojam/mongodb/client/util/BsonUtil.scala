@@ -1,14 +1,11 @@
 package com.evojam.mongodb.client.util
 
-import scala.collection.JavaConversions.seqAsJavaList
+import java.nio.ByteBuffer
 
-import org.bson.BsonDocument
-import org.bson.BsonDocumentReader
-import org.bson.BsonDocumentWriter
-import org.bson.codecs.Codec
-import org.bson.codecs.DecoderContext
-import org.bson.codecs.Encoder
-import org.bson.codecs.EncoderContext
+import scala.collection.JavaConversions._
+
+import org.bson._
+import org.bson.codecs._
 import org.bson.codecs.configuration.CodecRegistries
 import org.bson.conversions.Bson
 
@@ -34,6 +31,13 @@ object BsonUtil {
     }
   }
 
+  def fromBsonValue[T](bsonValue: BsonValue)(implicit c: Codec[T]): Option[T] =
+    Option(bsonValue)
+      .map(value =>
+        c.decode(
+          new BsonBinaryReader(ByteBuffer.wrap(value.asBinary().getData())),
+          DecoderContext.builder().build()))
+
   def toBsonDocument[T](bson: Bson)(implicit c: Codec[T]): BsonDocument =
     if (bson == null) {
       null
@@ -42,4 +46,11 @@ object BsonUtil {
         c.getEncoderClass,
         CodecRegistries.fromCodecs(List(c)))
     }
+
+  def copy(doc: Document): Document = {
+    val documentCopy = new Document()
+    for(key <- doc.keySet())
+      documentCopy.append(key, doc.get(key))
+    documentCopy
+  }
 }

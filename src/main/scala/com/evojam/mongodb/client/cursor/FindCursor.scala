@@ -21,7 +21,7 @@ private[client] case class FindCursor[T: Encoder](
   require(findOptions != null, "findOptions cannot be null")
   require(namespace != null, "namespace cannot be null")
   require(readPreference != null, "readPreference cannot be null")
-  require(executor != null, "executor cannt be null")
+  require(executor != null, "executor cannot be null")
 
   override protected def rawHead[R: Codec]() =
     cursor(queryOperation[R].copy(batchSize = 0, limit = -1))
