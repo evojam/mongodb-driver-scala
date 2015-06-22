@@ -52,6 +52,10 @@ trait MongoCollection {
     options: InsertManyOptions = new InsertManyOptions())(implicit w: Writer[T]): Future[Unit] =
     rawInsertAll(documents.map(w.write(_)), options)(w.codec)
 
+  def mapReduce[T: Codec](
+    mapFunction: String,
+    reduceFunction: String): MapReduceCursor[T]
+
   def delete[T: Codec](filter: T, multi: Boolean = false): Future[DeleteResult]
 
   def update[T: Codec](

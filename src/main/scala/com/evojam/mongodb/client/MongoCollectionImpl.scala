@@ -14,10 +14,10 @@ import org.bson.codecs.Codec
 
 import com.evojam.mongodb.client.codec.Reader
 import com.evojam.mongodb.client.cursor._
-import com.evojam.mongodb.client.model.{IndexModel, WriteOperation}
 import com.evojam.mongodb.client.model.operation.{CountOperation, CreateIndexesOperation, DropIndexOperation}
-import com.evojam.mongodb.client.model.options.FindOptions
+import com.evojam.mongodb.client.model.options.{FindOptions, MapReduceOptions}
 import com.evojam.mongodb.client.model.result.UpdateResult
+import com.evojam.mongodb.client.model.{IndexModel, WriteOperation}
 import com.evojam.mongodb.client.util.BsonUtil
 import com.evojam.mongodb.client.util.Conversions._
 
@@ -52,7 +52,9 @@ case class MongoCollectionImpl(
   override def aggregate[T: Codec](pipeline: List[T]) =
     AggregateCursor(pipeline, namespace, readPreference, executor)
 
-  // TODO: MapReduce
+  def mapReduce[T: Codec](mapFunction: String, reduceFunction: String): MapReduceCursor[T] =
+    MapReduceCursor(mapFunction, reduceFunction, readPreference, namespace, executor, MapReduceOptions[T]())
+
   // TODO: Bulk write/read
 
   override protected def rawInsert[T: Codec](document: T) =
