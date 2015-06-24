@@ -12,7 +12,7 @@ import com.mongodb.client.result.DeleteResult
 import com.mongodb.operation._
 import org.bson.codecs.Codec
 
-import com.evojam.mongodb.client.codec.Reader
+import com.evojam.mongodb.client.builder.FindAndModifyBuilder
 import com.evojam.mongodb.client.cursor._
 import com.evojam.mongodb.client.model.operation.{CountOperation, CreateIndexesOperation, DropIndexOperation}
 import com.evojam.mongodb.client.model.options.{FindOptions, MapReduceOptions}
@@ -86,26 +86,21 @@ case class MongoCollectionImpl(
     update: T,
     multi: Boolean = false) = this.update(filter, update, upsert = true, multi = multi)
 
-  // TODO: Implement sort
   // FIXME: When update is not valid document (eg.: instead of { $set : { field: value } } it is { field: value } the
   // weird exception is thrown by the driver...
 
-  def executeFindAndModify[T, R](filter: T, update: T, returnFormer: Boolean, upsert: Boolean)(implicit codec: Codec[T],
-    reader: Reader[R]): Future[Option[R]] =
-    executor.executeAsync(
-      new FindAndUpdateOperation(namespace, reader.codec, BsonUtil.toBson(update))
-        .filter(BsonUtil.toBson(filter))
-        .upsert(upsert).returnOriginal(returnFormer))
-      .toBlocking.toFuture.map(Option(_).map(reader.read))
+  override def findAndModify[T: Codec](update: T) =
+    FindAndModifyBuilder(
+      update = update,
+      executor = executor,
+      namespace = namespace)
 
-  override def findAndModify[T: Codec](
-    filter: T,
-    update: T,
-    returnFormer: Boolean = false,
-    upsert: Boolean = false): SingleResult = new SingleResult {
-      override def collect[R: Reader](): Future[Option[R]] =
-        executeFindAndModify(filter, update, returnFormer, upsert)
-    }
+  override def findAndModify[T: Codec](filter: T, update: T) =
+    FindAndModifyBuilder(
+      filter = Some(filter),
+      update = update,
+      executor = executor,
+      namespace = namespace)
 
   override def drop() =
     executor.executeAsync(new DropCollectionOperation(namespace))

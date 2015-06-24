@@ -1,9 +1,9 @@
-package com.evojam.mongodb.client
+package com.evojam.mongodb.client.builder
 
 import scala.concurrent.Future
 
 import com.evojam.mongodb.client.codec.Reader
 
-trait SingleResult {
+trait SingleResultBuilder {
   def collect[R: Reader](): Future[Option[R]]
 }

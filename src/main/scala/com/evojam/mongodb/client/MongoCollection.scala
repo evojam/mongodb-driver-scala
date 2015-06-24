@@ -2,12 +2,13 @@ package com.evojam.mongodb.client
 
 import scala.concurrent.Future
 
-import com.mongodb.{MongoNamespace, ReadPreference, WriteConcern}
 import com.mongodb.client.model._
 import com.mongodb.client.result.DeleteResult
+import com.mongodb.{MongoNamespace, ReadPreference, WriteConcern}
 import org.bson.BsonDocument
 import org.bson.codecs.Codec
 
+import com.evojam.mongodb.client.builder.FindAndModifyBuilder
 import com.evojam.mongodb.client.codec.{Codecs, Writer}
 import com.evojam.mongodb.client.cursor._
 import com.evojam.mongodb.client.model.IndexModel
@@ -69,11 +70,9 @@ trait MongoCollection {
     update: T,
     multi: Boolean = false): Future[UpdateResult[T]]
 
-  def findAndModify[T: Codec](
-    filter: T,
-    update: T,
-    returnFormer: Boolean = false,
-    upsert: Boolean = false): SingleResult
+  def findAndModify[T: Codec](update: T): FindAndModifyBuilder[T]
+
+  def findAndModify[T: Codec](filter: T, update: T): FindAndModifyBuilder[T]
 
   def drop(): Future[Unit]
 

@@ -38,8 +38,8 @@ class FindAndModifySpec extends Specification {
       collection
         .findAndModify(
           selector,
-          new Document("$set", document),
-          upsert = false)
+          new Document("$set", document))
+        .upsert(false)
         .collect[Document] must beNone.await
     }
 
@@ -47,8 +47,8 @@ class FindAndModifySpec extends Specification {
       collection
         .findAndModify(
           selector,
-          new Document("$set", document),
-          upsert = true)
+          new Document("$set", document))
+        .upsert(true)
         .collect[Document] must beSome(document).await
     }
 
@@ -60,7 +60,8 @@ class FindAndModifySpec extends Specification {
 
     "modify and return former" in {
       collection
-        .findAndModify(selector, update2, returnFormer = true)
+        .findAndModify(selector, update2)
+        .returnFormer(true)
         .collect[Document] must beSome(expectedDocument).await
     }
   }
