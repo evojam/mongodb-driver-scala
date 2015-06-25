@@ -25,10 +25,6 @@ private[client] case class ListCollectionsCursor[T: Encoder](
     cursor(queryOperation.copy(batchSize = Some(-1)))
       .head()
 
-  override protected def rawHeadOpt[R: Codec]() =
-    cursor(queryOperation.copy(batchSize = Some(-1)))
-      .headOpt()
-
   override protected def rawForeach[R: Codec](f: R => Unit) =
     cursor().foreach(f)
 
@@ -37,9 +33,6 @@ private[client] case class ListCollectionsCursor[T: Encoder](
 
   override protected def rawObservable[R: Codec](batchSize: Int) =
     cursor().observable(batchSize)
-
-  override protected def rawCollect[R: Codec]() =
-    cursor().collect()
 
   def filter(filter: T): ListCollectionsCursor[T] = {
     require(filter != null, "filter cannot be null")

@@ -21,10 +21,6 @@ private[client] case class ListIndexesCursor(
     cursor(queryOperation.copy(batchSize = -1))
       .head()
 
-  override protected def rawHeadOpt[R: Codec]() =
-    cursor(queryOperation.copy(batchSize = -1))
-      .headOpt()
-
   override protected def rawForeach[R: Codec](f: R => Unit) =
     cursor().foreach(f)
 
@@ -33,9 +29,6 @@ private[client] case class ListIndexesCursor(
 
   override protected def rawObservable[R: Codec](batchSize: Int) =
     cursor().observable(batchSize)
-
-  override protected def rawCollect[R: Codec]() =
-    cursor().collect()
 
   private def cursor[R: Codec](): OperationCursor[R] =
     cursor(queryOperation[R])

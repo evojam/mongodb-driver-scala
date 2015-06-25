@@ -1,6 +1,5 @@
 package com.evojam.mongodb.client.builder
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 import com.mongodb.MongoNamespace
@@ -31,8 +30,8 @@ case class FindAndModifyBuilder[T: Codec](
   override def collect[R]()(implicit reader: Reader[R]): Future[Option[R]] =
     executor.executeAsync(findAndUpdateOperation(
       new FindAndUpdateOperation(namespace, reader.codec, BsonUtil.toBson(update))))
-      .toBlocking.toFuture
       .map(Option(_).map(reader.read))
+      .toBlocking.toFuture
 
   def filter(filter: T): FindAndModifyBuilder[T] = {
     require(filter != null, "filter cannot be null")

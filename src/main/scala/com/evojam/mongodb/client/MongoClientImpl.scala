@@ -1,7 +1,5 @@
 package com.evojam.mongodb.client
 
-import scala.concurrent.ExecutionContext.Implicits.global
-
 import com.mongodb.connection.Cluster
 import org.bson.BsonDocument
 import com.evojam.mongodb.client.cursor.ListDatabasesCursor
@@ -21,7 +19,9 @@ private[client] class MongoClientImpl(
 
   override def databaseNames() =
     ListDatabasesCursor(settings.readPreference, executor)
-      .collect[BsonDocument]().map(_.map(_.getString("name").getValue))
+      .observable[BsonDocument]()
+      .map(_.getString("name").getValue)
+      .toList.toBlocking.toFuture
 
   override def close() = cluster.close()
 }

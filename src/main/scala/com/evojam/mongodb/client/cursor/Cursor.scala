@@ -1,6 +1,5 @@
 package com.evojam.mongodb.client.cursor
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 import org.bson.codecs.Codec
@@ -10,10 +9,16 @@ import com.evojam.mongodb.client.codec.Reader
 
 trait Cursor {
   def head[T]()(implicit r: Reader[T]): Future[T] =
-    rawHead()(r.codec).map(r.read)
+    rawHead()(r.codec).toList
+      .map(_.head)
+      .map(r.read)
+      .toBlocking.toFuture
 
   def headOpt[T]()(implicit r: Reader[T]): Future[Option[T]] =
-    rawHeadOpt()(r.codec).map(_.map(r.read))
+    rawHead()(r.codec).toList
+      .map(_.headOption)
+      .map(_.map(r.read))
+      .toBlocking.toFuture
 
   def foreach[T](f: T => Unit)(implicit r: Reader[T]): Unit =
     rawForeach((r.read _) andThen f)(r.codec)
@@ -25,17 +30,15 @@ trait Cursor {
     rawObservable(batchSize)(r.codec).map(_.map(r.read))
 
   def collect[T]()(implicit r: Reader[T]): Future[List[T]] =
-    rawCollect()(r.codec).map(_.map(r.read))
+    rawObservable()(r.codec)
+      .map(r.read)
+      .toList.toBlocking.toFuture
 
-  protected def rawHead[T: Codec](): Future[T]
-
-  protected def rawHeadOpt[T: Codec](): Future[Option[T]]
+  protected def rawHead[T: Codec](): Observable[T]
 
   protected def rawForeach[T: Codec](f: T => Unit): Unit
 
   protected def rawObservable[T: Codec](): Observable[T]
 
   protected def rawObservable[T: Codec](batchSize: Int): Observable[List[T]]
-
-  protected def rawCollect[T: Codec](): Future[List[T]]
 }

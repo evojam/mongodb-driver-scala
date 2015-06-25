@@ -33,9 +33,6 @@ private[client] case class AggregateCursor[T: Encoder](
   override protected def rawHead[R: Codec]() =
     cursor().head()
 
-  override protected def rawHeadOpt[R: Codec]() =
-    cursor().headOpt()
-
   override protected def rawForeach[R: Codec](f: R => Unit) =
     cursor().foreach(f)
 
@@ -45,9 +42,6 @@ private[client] case class AggregateCursor[T: Encoder](
   override protected def rawObservable[R: Codec](batchSize: Int) =
     cursor(aggregateOperation[R](bsonPipeline).copy(batchSize = Some(batchSize)))
       .observable(batchSize)
-
-  override protected def rawCollect[R: Codec]() =
-    cursor().collect()
 
   def toCollection(): Future[Unit] = ???
 

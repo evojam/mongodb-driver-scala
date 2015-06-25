@@ -1,6 +1,5 @@
 package com.evojam.mongodb.client.cursor
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.language.existentials
 
@@ -22,15 +21,10 @@ private[client] case class OperationCursor[R: Codec](
   require(readPreference != null, "readPreference cannot be null")
   require(executor != null, "executor cannot be null")
 
-  def head(): Future[R] =
-    headOpt().map(_.get)
-
-  def headOpt(): Future[Option[R]] =
+  def head(): Observable[R] =
     executor.executeAsync(operation, readPreference)
       .flatMap(_.takeFirstAsObservable)
       .first
-      .toList
-      .map(_.headOption).toBlocking.toFuture
 
   def foreach(f: R => Unit): Unit =
     execute().foreach(f)
@@ -41,9 +35,6 @@ private[client] case class OperationCursor[R: Codec](
   def observable(batchSize: Int): Observable[List[R]] =
     executor.executeAsync(operation, readPreference)
       .flatMap(_.asBatchObservable(batchSize))
-
-  def collect(): Future[List[R]] =
-    execute().toList.toBlocking.toFuture
 
   private def execute(): Observable[R] =
     executor.executeAsync(operation, readPreference)

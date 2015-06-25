@@ -1,8 +1,6 @@
 package com.evojam.mongodb.client
 
 import scala.collection.JavaConversions._
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 import scala.language.implicitConversions
 
 import com.mongodb._
@@ -11,6 +9,7 @@ import com.mongodb.client.model._
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.operation._
 import org.bson.codecs.Codec
+import rx.lang.scala.Observable
 
 import com.evojam.mongodb.client.builder.FindAndModifyBuilder
 import com.evojam.mongodb.client.cursor._
@@ -40,8 +39,9 @@ private[client] case class MongoCollectionImpl(
 
   override def count[T: Codec](filter: T, options: CountOptions) =
     executor.executeAsync(
-      CountOperation(namespace, Option(filter), options),
-      readPreference).toBlocking.toFuture.map(_.longValue)
+      CountOperation(namespace, Option(filter), options), readPreference)
+      .map(_.longValue)
+      .toBlocking.toFuture
 
   override def find[T: Codec](filter: T) =
     FindCursor(Option(filter), FindOptions(), namespace, readPreference, executor)
@@ -59,6 +59,7 @@ private[client] case class MongoCollectionImpl(
 
   override protected def rawInsert[T: Codec](document: T) =
     executeWrite(new InsertRequest(BsonUtil.toBson(document)))(_ => ())
+      .toBlocking.toFuture
 
   override protected def rawInsertAll[T: Codec](documents: List[T], options: InsertManyOptions) =
     executor.executeAsync(
@@ -66,10 +67,13 @@ private[client] case class MongoCollectionImpl(
         namespace,
         documents.map(doc => new InsertRequest(BsonUtil.toBson(doc))),
         options.isOrdered,
-        writeConcern)).toList.toBlocking.toFuture.map(_ => ())
+        writeConcern))
+      .toList.map(_ => ())
+      .toBlocking.toFuture
 
   override def delete[T: Codec](filter: T, multi: Boolean) =
     executeWrite[DeleteResult](new DeleteRequest(BsonUtil.toBson(filter)))
+      .toBlocking.toFuture
 
   override def update[T: Codec](
     filter: T,
@@ -80,6 +84,7 @@ private[client] case class MongoCollectionImpl(
       new UpdateRequest(BsonUtil.toBson(filter), BsonUtil.toBson(update), WriteRequest.Type.UPDATE)
         .upsert(upsert)
         .multi(multi))
+      .toBlocking.toFuture
 
   override def upsert[T: Codec](
     filter: T,
@@ -104,7 +109,8 @@ private[client] case class MongoCollectionImpl(
 
   override def drop() =
     executor.executeAsync(new DropCollectionOperation(namespace))
-      .toBlocking.toFuture.map(_ => ())
+      .map(_ => ())
+      .toBlocking.toFuture
 
   private def buildIndexRequests[T: Codec](indexes: List[IndexModel[T]]) =
     indexes.foldRight(List.empty[IndexRequest])(
@@ -115,18 +121,21 @@ private[client] case class MongoCollectionImpl(
 
   override def createIndexes[T: Codec](indexes: List[IndexModel[T]]) =
     executor.executeAsync(CreateIndexesOperation(namespace, buildIndexRequests(indexes)))
-      .toBlocking.toFuture.map(_ => ())
+      .map(_ => ())
+      .toBlocking.toFuture
 
   override def listIndexes() =
     ListIndexesCursor(namespace, readPreference, executor = executor)
 
   override def dropIndex(indexName: String) =
     executor.executeAsync(DropIndexOperation(namespace, indexName))
-      .toBlocking.toFuture.map(_ => ())
+      .map(_ => ())
+      .toBlocking.toFuture
 
   override def dropIndex[T: Codec](keys: T) =
     executor.executeAsync(DropIndexOperation(namespace, BsonUtil.toBson(keys)))
-      .toBlocking.toFuture.map(_ => ())
+      .map(_ => ())
+      .toBlocking.toFuture
 
   override def dropIndexes() =
     dropIndex("*")
@@ -134,13 +143,13 @@ private[client] case class MongoCollectionImpl(
   override def renameCollection(newCollectionNamespace: MongoNamespace, options: RenameCollectionOptions) =
     executor.executeAsync(new RenameCollectionOperation(namespace, newCollectionNamespace)
       .dropTarget(options.isDropTarget))
-      .toBlocking.toFuture.map(_ => ())
+      .map(_ => ())
+      .toBlocking.toFuture
 
   private def executeWrite[T](request: WriteRequest)(implicit f: BulkWriteResult => T) =
     executeSingleWriteRequest(request).map(f)
 
-  private def executeSingleWriteRequest(request: WriteRequest): Future[BulkWriteResult] =
+  private def executeSingleWriteRequest(request: WriteRequest): Observable[BulkWriteResult] =
     executor.executeAsync[BulkWriteResult](
       WriteOperation(namespace, List(request), ordered = true, writeConcern))
-      .toBlocking.toFuture
 }

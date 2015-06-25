@@ -65,23 +65,17 @@ private[client] case class MapReduceCursor[T: Encoder](
   def batchSize(batchSize: Int) =
     this.copy(options = options.copy(batchSize = Some(batchSize)))
 
-  override protected def rawHead[R: Codec](): Future[R] =
+  override protected def rawHead[R: Codec]() =
     cursor().head()
 
-  override protected def rawHeadOpt[R: Codec](): Future[Option[R]] =
-    cursor().headOpt()
-
-  override protected def rawObservable[R: Codec](): Observable[R] =
+  override protected def rawObservable[R: Codec]() =
     cursor().observable()
 
-  override protected def rawObservable[R: Codec](batchSize: Int): Observable[List[R]] =
+  override protected def rawObservable[R: Codec](batchSize: Int) =
     cursor().observable(batchSize)
 
-  override protected def rawForeach[R: Codec](f: (R) => Unit): Unit =
+  override protected def rawForeach[R: Codec](f: (R) => Unit) =
     cursor().foreach(f)
-
-  override protected def rawCollect[R: Codec](): Future[List[R]] =
-    cursor().collect()
 
   private def cursor[R: Codec](): OperationCursor[R] =
     cursor(mapReduceOperation[R])

@@ -1,6 +1,5 @@
 package com.evojam.mongodb.client
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 import com.mongodb.MongoNamespace
@@ -37,8 +36,9 @@ class MongoDatabase(
       name,
       ReadPreference.primary(),
       executor)
-      .collect[BsonDocument]()
-      .map(_.map(_.getString("name").getValue))
+      .observable[BsonDocument]()
+      .map(_.getString("name").getValue)
+      .toList.toBlocking.toFuture
 
   def listCollections[T: Encoder](): Cursor =
     ListCollectionsCursor[T](name, ReadPreference.primary(), executor)
@@ -66,7 +66,8 @@ class MongoDatabase(
 
   def drop(): Future[Unit] =
     executor.executeAsync(new DropDatabaseOperation(name))
-      .toBlocking.toFuture.map(_ => ())
+      .map(_ => ())
+      .toBlocking.toFuture
 
   def createCollection(collectionName: String): Future[Unit] =
     createCollection(collectionName, CreateCollectionOptions())
@@ -88,6 +89,8 @@ class MongoDatabase(
       .usePowerOf2Sizes(options.usePowerOf2Sizes)
     storageEngineOptions.map(storageOptions =>
       opts.storageEngineOptions(BsonUtil.toBson(storageOptions)))
-    executor.executeAsync(opts).toBlocking.toFuture.map(_ => ())
+    executor.executeAsync(opts)
+      .map(_ => ())
+      .toBlocking.toFuture
   }
 }
