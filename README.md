@@ -44,14 +44,14 @@ val docs: Future[List[Document]] =
 Current stable version:
 
 ```scala
-resolvers += "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
+resolvers += Resolver.sonatypeRepo("releases")
 libraryDependencies += "com.evojam" % "mongo-driver-scala_2.11" % "0.4.1"
 ```
 
 Current snapshot:
 
 ```scala
-resolvers += "Sonatype Releases" at "https://oss.sonatype.org/content/repositories/releases/"
+resolvers += Resolver.sonatypeRepo("snapshots")
 libraryDependencies += "com.evojam" % "mongo-driver-scala_2.11" % "0.4.1-SNAPSHOT"
 ```
 
