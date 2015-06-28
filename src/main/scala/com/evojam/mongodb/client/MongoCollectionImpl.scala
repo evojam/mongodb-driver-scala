@@ -21,7 +21,7 @@ import com.evojam.mongodb.client.model.{IndexModel, WriteOperation}
 import com.evojam.mongodb.client.util.BsonUtil
 import com.evojam.mongodb.client.util.Conversions._
 
-case class MongoCollectionImpl(
+private[client] case class MongoCollectionImpl(
   namespace: MongoNamespace,
   implicit val readPreference: ReadPreference,
   implicit val writeConcern: WriteConcern,

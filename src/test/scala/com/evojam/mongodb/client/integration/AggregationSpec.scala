@@ -2,8 +2,7 @@ package com.evojam.mongodb.client.integration
 
 import org.bson.Document
 import org.specs2.mutable.Specification
-
-import com.evojam.mongodb.client.codec.Codecs._
+import com.evojam.mongodb.client._
 import com.evojam.mongodb.client.util.SampleNonEmptyCollection
 
 class AggregationSpec extends Specification {

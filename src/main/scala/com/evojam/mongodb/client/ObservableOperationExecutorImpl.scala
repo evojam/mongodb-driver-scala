@@ -7,7 +7,7 @@ import com.mongodb.connection.Cluster
 import com.mongodb.operation.{ AsyncReadOperation, AsyncWriteOperation }
 import rx.lang.scala.{ Observable, Subscriber }
 
-class ObservableOperationExecutorImpl(cluster: Cluster) extends ObservableOperationExecutor {
+private[client] class ObservableOperationExecutorImpl(cluster: Cluster) extends ObservableOperationExecutor {
 
   def bindWithCallback[T](subscriber: Subscriber[T]) =
     new SingleResultCallback[T] {

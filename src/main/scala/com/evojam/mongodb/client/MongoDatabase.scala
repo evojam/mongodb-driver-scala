@@ -11,8 +11,6 @@ import org.bson.BsonDocument
 import org.bson.Document
 import org.bson.codecs.Codec
 import org.bson.codecs.Encoder
-
-import com.evojam.mongodb.client.codec.Codecs._
 import com.evojam.mongodb.client.cursor._
 import com.evojam.mongodb.client.model.options.CreateCollectionOptions
 import com.evojam.mongodb.client.util.BsonUtil

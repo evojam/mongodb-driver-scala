@@ -19,8 +19,8 @@ When MongoDB released the new *Core Async Driver*, we decided to start this proj
 
 ```scala
 import scala.concurrent.Future
-import com.evojam.mongodb.client.MongoClients
-import com.evojam.mongodb.client.codec.Codecs._
+
+import com.evojam.mongodb.client._
 import org.bson.Document
 
 val client = MongoClients.create() // Default connection to localhost:27017
@@ -52,7 +52,7 @@ Current snapshot:
 
 ```scala
 resolvers += Resolver.sonatypeRepo("snapshots")
-libraryDependencies += "com.evojam" % "mongo-driver-scala_2.11" % "0.4.1-SNAPSHOT"
+libraryDependencies += "com.evojam" % "mongo-driver-scala_2.11" % "0.4.2-SNAPSHOT"
 ```
 
 ## Framework Integration

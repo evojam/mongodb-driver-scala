@@ -8,8 +8,7 @@ import scala.util.Random
 import org.bson._
 import org.specs2.mutable.Specification
 
-import com.evojam.mongodb.client.MongoClients
-import com.evojam.mongodb.client.codec.Codecs._
+import com.evojam.mongodb.client._
 import com.evojam.mongodb.client.util.{BsonUtil, DocumentGenerator}
 
 class MongoCollectionSpec extends Specification with DocumentGenerator {

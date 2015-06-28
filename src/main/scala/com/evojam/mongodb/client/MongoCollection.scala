@@ -9,7 +9,7 @@ import org.bson.BsonDocument
 import org.bson.codecs.Codec
 
 import com.evojam.mongodb.client.builder.FindAndModifyBuilder
-import com.evojam.mongodb.client.codec.{Codecs, Writer}
+import com.evojam.mongodb.client.codec.Writer
 import com.evojam.mongodb.client.cursor._
 import com.evojam.mongodb.client.model.IndexModel
 import com.evojam.mongodb.client.model.result.UpdateResult
@@ -20,7 +20,7 @@ trait MongoCollection {
   def withWriteConcern(writeConcern: WriteConcern): MongoCollection
 
   def count(): Future[Long] =
-    count[BsonDocument](new BsonDocument(), new CountOptions())(Codecs.bsonDocumentCodec)
+    count[BsonDocument](new BsonDocument(), new CountOptions())(bsonDocumentCodec)
 
   def count[T: Codec](filter: T): Future[Long] =
     count(filter, new CountOptions())
@@ -28,12 +28,12 @@ trait MongoCollection {
   def count[T: Codec](filter: T, options: CountOptions): Future[Long]
 
   def find(): FindCursor[BsonDocument] =
-    find[BsonDocument](new BsonDocument())(Codecs.bsonDocumentCodec)
+    find[BsonDocument](new BsonDocument())(bsonDocumentCodec)
 
   def find[T: Codec](filter: T): FindCursor[T]
 
   def distinct(fieldName: String): DistinctCursor[BsonDocument] =
-    distinct[BsonDocument](fieldName, new BsonDocument())(Codecs.bsonDocumentCodec)
+    distinct[BsonDocument](fieldName, new BsonDocument())(bsonDocumentCodec)
 
   def distinct[T: Codec](fieldName: String, filter: T): DistinctCursor[T]
 

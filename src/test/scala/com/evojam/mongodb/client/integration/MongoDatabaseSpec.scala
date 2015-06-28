@@ -7,8 +7,7 @@ import scala.concurrent.duration.Duration
 import org.bson._
 import org.specs2.mutable.Specification
 
-import com.evojam.mongodb.client.MongoClients
-import com.evojam.mongodb.client.codec.Codecs._
+import com.evojam.mongodb.client._
 import com.evojam.mongodb.client.model.options.CreateCollectionOptions
 
 class MongoDatabaseSpec extends Specification {

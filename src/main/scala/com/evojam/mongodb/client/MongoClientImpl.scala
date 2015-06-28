@@ -4,8 +4,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 import com.mongodb.connection.Cluster
 import org.bson.BsonDocument
-
-import com.evojam.mongodb.client.codec.Codecs._
 import com.evojam.mongodb.client.cursor.ListDatabasesCursor
 
 private[client] class MongoClientImpl(

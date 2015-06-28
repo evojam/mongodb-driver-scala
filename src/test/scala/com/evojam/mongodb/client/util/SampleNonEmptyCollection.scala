@@ -7,8 +7,7 @@ import scala.language.postfixOps
 import org.bson.Document
 import org.specs2.mutable.BeforeAfter
 
-import com.evojam.mongodb.client.MongoClients
-import com.evojam.mongodb.client.codec.Codecs._
+import com.evojam.mongodb.client._
 
 trait SampleNonEmptyCollection extends BeforeAfter {
   val db = MongoClients.create().database("foodb")

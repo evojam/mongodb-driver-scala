@@ -1,10 +1,9 @@
-package com.evojam.mongodb.client.codec
+package com.evojam.mongodb
 
-import org.bson.codecs.BsonDocumentCodec
-import org.bson.codecs.Codec
-import org.bson.codecs.DocumentCodec
+import com.evojam.mongodb.client.codec.{Writer, Reader}
+import org.bson.codecs.{Codec, DocumentCodec, BsonDocumentCodec}
 
-object Codecs {
+package object client {
   implicit lazy val bsonDocumentCodec = new BsonDocumentCodec()
   implicit lazy val documentCodec = new DocumentCodec()
 

@@ -6,8 +6,7 @@ import scala.concurrent.duration.Duration
 import org.bson.Document
 import org.specs2.mutable.Specification
 
-import com.evojam.mongodb.client.MongoClients
-import com.evojam.mongodb.client.codec.Codecs._
+import com.evojam.mongodb.client._
 
 class FindAndModifySpec extends Specification {
   sequential

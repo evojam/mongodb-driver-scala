@@ -1,12 +1,8 @@
 package com.evojam.mongodb.client.integration
 
-import com.mongodb.client.model.IndexOptions
-
 import org.bson.Document
 import org.specs2.mutable.Specification
-
-import com.evojam.mongodb.client.codec.Codecs._
-import com.evojam.mongodb.client.model.IndexModel
+import com.evojam.mongodb.client._
 import com.evojam.mongodb.client.util.IndexSpecSetup
 
 class IndexSpec extends Specification with IndexSpecSetup {
