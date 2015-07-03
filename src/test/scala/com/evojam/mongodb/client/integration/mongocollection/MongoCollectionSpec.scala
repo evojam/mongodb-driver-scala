@@ -22,10 +22,7 @@ class MongoCollectionSpec extends Specification with DocumentGenerator {
     Await.ready(collection.drop(), Duration.Inf)
 
     val docs = documents(Some(1000))
-    val propName = docs.headOption
-      .map(doc => asScalaSet(doc.keySet())
-        .headOption.getOrElse(throw new Exception("Document must have at least one property.")))
-      .getOrElse(throw new Exception("There must be at least one document generated."))
+    val propName = arbitraryProperty(docs)
 
     val timeout = 10
 

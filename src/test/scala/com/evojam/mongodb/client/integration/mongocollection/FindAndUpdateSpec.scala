@@ -8,10 +8,10 @@ import org.specs2.mutable.Specification
 
 import com.evojam.mongodb.client._
 
-class FindAndModifySpec extends Specification {
+class FindAndUpdateSpec extends Specification {
   sequential
 
-  "MongoCollection findAndModify" should {
+  "MongoCollection findAndUpdate" should {
     val collection =
       MongoClients.create().database("testdba")
         .collection("acollection")
@@ -35,7 +35,7 @@ class FindAndModifySpec extends Specification {
 
     "fail to find and create nothing" in {
       collection
-        .findAndModify(
+        .findAndUpdate(
           selector,
           new Document("$set", document))
         .upsert(false)
@@ -44,22 +44,22 @@ class FindAndModifySpec extends Specification {
 
     "insert document into collection" in {
       collection
-        .findAndModify(
+        .findAndUpdate(
           selector,
           new Document("$set", document))
         .upsert(true)
         .collect[Document] must beSome(document).await
     }
 
-    "modify and return updated" in {
+    "update and return updated" in {
       collection
-        .findAndModify(selector, update1)
+        .findAndUpdate(selector, update1)
         .collect[Document] must beSome(expectedDocument).await
     }
 
-    "modify and return former" in {
+    "update and return former" in {
       collection
-        .findAndModify(selector, update2)
+        .findAndUpdate(selector, update2)
         .returnFormer(true)
         .collect[Document] must beSome(expectedDocument).await
     }

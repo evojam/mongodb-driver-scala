@@ -8,7 +8,7 @@ import com.mongodb.{MongoNamespace, ReadPreference, WriteConcern}
 import org.bson.BsonDocument
 import org.bson.codecs.Codec
 
-import com.evojam.mongodb.client.builder.FindAndModifyBuilder
+import com.evojam.mongodb.client.builder.{FindAndRemoveBuilder, FindAndUpdateBuilder}
 import com.evojam.mongodb.client.codec.Writer
 import com.evojam.mongodb.client.cursor._
 import com.evojam.mongodb.client.model.IndexModel
@@ -70,9 +70,11 @@ trait MongoCollection {
     update: T,
     multi: Boolean = false)(implicit exc: ExecutionContext): Future[UpdateResult[T]]
 
-  def findAndModify[T: Codec](update: T): FindAndModifyBuilder[T]
+  def findAndUpdate[T: Codec](update: T): FindAndUpdateBuilder[T]
 
-  def findAndModify[T: Codec](filter: T, update: T): FindAndModifyBuilder[T]
+  def findAndUpdate[T: Codec](filter: T, update: T): FindAndUpdateBuilder[T]
+
+  def findAndRemove[T: Codec](filter: T): FindAndRemoveBuilder[T]
 
   def drop()(implicit exc: ExecutionContext): Future[Unit]
 

@@ -1,5 +1,6 @@
 package com.evojam.mongodb.client.util
 
+import scala.collection.JavaConversions._
 import scala.util.Random
 
 import org.bson.Document
@@ -69,4 +70,10 @@ trait DocumentGenerator {
     (for(i <- 1 to nextArraySize(arraySize))
       yield nextDocument(schema)).toList
   }
+
+  def arbitraryProperty(docs: List[Document]): String =
+    docs.headOption
+      .map(doc => asScalaSet(doc.keySet())
+        .headOption.getOrElse(throw new Exception("Document must have at least one property")))
+      .getOrElse(throw new Exception("Threre must be at lease one document in a list."))
 }

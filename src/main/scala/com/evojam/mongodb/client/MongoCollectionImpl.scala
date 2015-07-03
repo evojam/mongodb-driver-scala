@@ -12,7 +12,7 @@ import com.mongodb.operation._
 import org.bson.codecs.Codec
 import rx.lang.scala.Observable
 
-import com.evojam.mongodb.client.builder.FindAndModifyBuilder
+import com.evojam.mongodb.client.builder.{FindAndRemoveBuilder, FindAndUpdateBuilder}
 import com.evojam.mongodb.client.cursor._
 import com.evojam.mongodb.client.model.operation.{CountOperation, CreateIndexesOperation, DropIndexOperation}
 import com.evojam.mongodb.client.model.options.{FindOptions, MapReduceOptions}
@@ -97,16 +97,22 @@ private[client] case class MongoCollectionImpl(
   // FIXME: When update is not valid document (eg.: instead of { $set : { field: value } } it is { field: value } the
   // weird exception is thrown by the driver...
 
-  override def findAndModify[T: Codec](update: T) =
-    FindAndModifyBuilder(
+  override def findAndUpdate[T: Codec](update: T) =
+    FindAndUpdateBuilder(
       update = update,
       executor = executor,
       namespace = namespace)
 
-  override def findAndModify[T: Codec](filter: T, update: T) =
-    FindAndModifyBuilder(
+  override def findAndUpdate[T: Codec](filter: T, update: T) =
+    FindAndUpdateBuilder(
       filter = Some(filter),
       update = update,
+      executor = executor,
+      namespace = namespace)
+
+  override def findAndRemove[T: Codec](filter: T) =
+    FindAndRemoveBuilder(
+      filter = filter,
       executor = executor,
       namespace = namespace)
 
