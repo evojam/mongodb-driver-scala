@@ -2,7 +2,7 @@ package com.evojam.mongodb.client
 
 import java.io.Closeable
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 trait MongoClient extends Closeable {
 
@@ -12,5 +12,5 @@ trait MongoClient extends Closeable {
 
   def settings: MongoClientSettings
 
-  def databaseNames(): Future[List[String]]
+  def databaseNames()(implicit exc: ExecutionContext): Future[List[String]]
 }

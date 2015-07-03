@@ -1,10 +1,10 @@
 package com.evojam.mongodb.client.cursor
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-import com.mongodb.{ MongoNamespace, ReadPreference }
-import org.bson.{ BsonDocument, BsonValue }
-import org.bson.codecs.{ Codec, Encoder }
+import com.mongodb.{MongoNamespace, ReadPreference}
+import org.bson.{BsonDocument, BsonValue}
+import org.bson.codecs.{Codec, Encoder}
 
 import com.evojam.mongodb.client.ObservableOperationExecutor
 import com.evojam.mongodb.client.util.BsonUtil
@@ -30,22 +30,22 @@ private[client] case class AggregateCursor[T: Encoder](
   require(useCursor != null, "useCursor cannot be null")
   require(maxTimeMS != null, "maxTimeMS cannot be null")
 
-  override protected def rawHead[R: Codec]() =
+  override protected def rawHead[R: Codec]()(implicit exc: ExecutionContext) =
     cursor().head()
 
-  override protected def rawForeach[R: Codec](f: R => Unit) =
+  override protected def rawForeach[R: Codec](f: R => Unit)(implicit exc: ExecutionContext) =
     cursor().foreach(f)
 
-  override protected def rawObservable[R: Codec]() =
+  override protected def rawObservable[R: Codec]()(implicit exc: ExecutionContext) =
     cursor().observable()
 
-  override protected def rawObservable[R: Codec](batchSize: Int) =
+  override protected def rawObservable[R: Codec](batchSize: Int)(implicit exc: ExecutionContext) =
     cursor(aggregateOperation[R](bsonPipeline).copy(batchSize = Some(batchSize)))
       .observable(batchSize)
 
   def toCollection(): Future[Unit] = ???
 
-  private def cursor[R: Codec](): OperationCursor[R] =
+  private def cursor[R: Codec]()(implicit ec: ExecutionContext): OperationCursor[R] =
     cursor(aggregateOperation[R](bsonPipeline))
 
   private def cursor[R: Codec](operation: AggregateOperation[R]): OperationCursor[R] =

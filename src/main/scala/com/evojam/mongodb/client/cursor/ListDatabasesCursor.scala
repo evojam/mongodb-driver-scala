@@ -2,6 +2,7 @@ package com.evojam.mongodb.client.cursor
 
 import java.util.concurrent.TimeUnit.MILLISECONDS
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.TimeUnit
 
 import com.mongodb.ReadPreference
@@ -18,16 +19,16 @@ private[client] case class ListDatabasesCursor(
   require(readPreference != null, "readPreference cannot be null")
   require(executor != null, "executor cannot be null")
 
-  override protected def rawHead[R: Codec]() =
+  override protected def rawHead[R: Codec]()(implicit exc: ExecutionContext) =
     cursor().head()
 
-  override protected def rawForeach[R: Codec](f: R => Unit) =
+  override protected def rawForeach[R: Codec](f: R => Unit)(implicit exc: ExecutionContext) =
     cursor().foreach(f)
 
-  override protected def rawObservable[R: Codec]() =
+  override protected def rawObservable[R: Codec]()(implicit exc: ExecutionContext) =
     cursor().observable()
 
-  override protected def rawObservable[R: Codec](batchSize: Int) =
+  override protected def rawObservable[R: Codec](batchSize: Int)(implicit exc: ExecutionContext) =
     cursor().observable(batchSize)
 
   def maxTime(maxTime: Long, timeUnit: TimeUnit): ListDatabasesCursor =

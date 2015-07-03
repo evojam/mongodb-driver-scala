@@ -2,10 +2,11 @@ package com.evojam.mongodb.client.cursor
 
 import java.util.concurrent.TimeUnit
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.TimeUnit
 
-import com.mongodb.{ MongoNamespace, ReadPreference }
-import org.bson.codecs.{ Codec, Encoder }
+import com.mongodb.{MongoNamespace, ReadPreference}
+import org.bson.codecs.{Codec, Encoder}
 
 import com.evojam.mongodb.client.ObservableOperationExecutor
 import com.evojam.mongodb.client.model.DistinctOperation
@@ -25,16 +26,16 @@ private[client] case class DistinctCursor[T: Encoder](
   require(executor != null, "executor cannot be null")
   require(maxTimeMS != null, "maxTimeMS cannot be null")
 
-  override protected def rawHead[R: Codec]() =
+  override protected def rawHead[R: Codec]()(implicit exc: ExecutionContext) =
     cursor().head()
 
-  override protected def rawForeach[R: Codec](f: R => Unit) =
+  override protected def rawForeach[R: Codec](f: R => Unit)(implicit exc: ExecutionContext) =
     cursor().foreach(f)
 
-  override protected def rawObservable[R: Codec]() =
+  override protected def rawObservable[R: Codec]()(implicit exc: ExecutionContext) =
     cursor().observable()
 
-  override protected def rawObservable[R: Codec](batchSize: Int) =
+  override protected def rawObservable[R: Codec](batchSize: Int)(implicit exc: ExecutionContext) =
     cursor().observable(batchSize)
 
   def filter(filter: T) =

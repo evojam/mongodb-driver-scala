@@ -1,6 +1,6 @@
 package com.evojam.mongodb.client.cursor
 
-import scala.concurrent.Future
+import scala.concurrent.ExecutionContext
 import scala.language.existentials
 
 import com.mongodb.ReadPreference
@@ -21,22 +21,22 @@ private[client] case class OperationCursor[R: Codec](
   require(readPreference != null, "readPreference cannot be null")
   require(executor != null, "executor cannot be null")
 
-  def head(): Observable[R] =
+  def head()(implicit exc: ExecutionContext): Observable[R] =
     executor.executeAsync(operation, readPreference)
       .flatMap(_.takeFirstAsObservable)
       .first
 
-  def foreach(f: R => Unit): Unit =
+  def foreach(f: R => Unit)(implicit exc: ExecutionContext): Unit =
     execute().foreach(f)
 
-  def observable(): Observable[R] =
+  def observable()(implicit exc: ExecutionContext): Observable[R] =
     execute()
 
-  def observable(batchSize: Int): Observable[List[R]] =
+  def observable(batchSize: Int)(implicit exc: ExecutionContext): Observable[List[R]] =
     executor.executeAsync(operation, readPreference)
       .flatMap(_.asBatchObservable(batchSize))
 
-  private def execute(): Observable[R] =
+  private def execute()(implicit exc: ExecutionContext): Observable[R] =
     executor.executeAsync(operation, readPreference)
       .flatMap(_.asObservable)
 }

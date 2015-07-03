@@ -1,6 +1,6 @@
 package com.evojam.mongodb.client
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 import com.mongodb.client.model._
 import com.mongodb.client.result.DeleteResult
@@ -19,13 +19,13 @@ trait MongoCollection {
 
   def withWriteConcern(writeConcern: WriteConcern): MongoCollection
 
-  def count(): Future[Long] =
-    count[BsonDocument](new BsonDocument(), new CountOptions())(bsonDocumentCodec)
+  def count()(implicit exc: ExecutionContext): Future[Long] =
+    count[BsonDocument](new BsonDocument(), new CountOptions())(bsonDocumentCodec, exc)
 
-  def count[T: Codec](filter: T): Future[Long] =
+  def count[T: Codec](filter: T)(implicit exc: ExecutionContext): Future[Long] =
     count(filter, new CountOptions())
 
-  def count[T: Codec](filter: T, options: CountOptions): Future[Long]
+  def count[T: Codec](filter: T, options: CountOptions)(implicit exc: ExecutionContext): Future[Long]
 
   def find(): FindCursor[BsonDocument] =
     find[BsonDocument](new BsonDocument())(bsonDocumentCodec)
@@ -39,56 +39,57 @@ trait MongoCollection {
 
   def aggregate[T: Codec](pipeline: List[T]): AggregateCursor[T]
 
-  protected def rawInsert[T: Codec](document: T): Future[Unit]
+  protected def rawInsert[T: Codec](document: T)(implicit exc: ExecutionContext): Future[Unit]
 
   protected def rawInsertAll[T: Codec](
     documents: List[T],
-    options: InsertManyOptions = new InsertManyOptions()): Future[Unit]
+    options: InsertManyOptions = new InsertManyOptions())(implicit exc: ExecutionContext): Future[Unit]
 
-  def insert[T](document: T)(implicit w: Writer[T]): Future[Unit] =
-    rawInsert(w.write(document))(w.codec)
+  def insert[T](document: T)(implicit w: Writer[T], exc: ExecutionContext): Future[Unit] =
+    rawInsert(w.write(document))(w.codec, exc)
 
   def insertAll[T](
     documents: List[T],
-    options: InsertManyOptions = new InsertManyOptions())(implicit w: Writer[T]): Future[Unit] =
-    rawInsertAll(documents.map(w.write(_)), options)(w.codec)
+    options: InsertManyOptions = new InsertManyOptions())(implicit w: Writer[T], exc: ExecutionContext): Future[Unit] =
+    rawInsertAll(documents.map(w.write(_)), options)(w.codec, exc)
 
   def mapReduce[T: Codec](
     mapFunction: String,
     reduceFunction: String): MapReduceCursor[T]
 
-  def delete[T: Codec](filter: T, multi: Boolean = false): Future[DeleteResult]
+  def delete[T: Codec](filter: T, multi: Boolean = false)(implicit exc: ExecutionContext): Future[DeleteResult]
 
   def update[T: Codec](
     filter: T,
     update: T,
     upsert: Boolean = false,
-    multi: Boolean = false): Future[UpdateResult[T]]
+    multi: Boolean = false)(implicit exc: ExecutionContext): Future[UpdateResult[T]]
 
   def upsert[T: Codec](
     filter: T,
     update: T,
-    multi: Boolean = false): Future[UpdateResult[T]]
+    multi: Boolean = false)(implicit exc: ExecutionContext): Future[UpdateResult[T]]
 
   def findAndModify[T: Codec](update: T): FindAndModifyBuilder[T]
 
   def findAndModify[T: Codec](filter: T, update: T): FindAndModifyBuilder[T]
 
-  def drop(): Future[Unit]
+  def drop()(implicit exc: ExecutionContext): Future[Unit]
 
-  def createIndex[T: Codec](key: T, options: IndexOptions = new IndexOptions()): Future[Unit]
+  def createIndex[T: Codec](key: T, options: IndexOptions = new IndexOptions())
+    (implicit exc: ExecutionContext): Future[Unit]
 
-  def createIndexes[T: Codec](indexes: List[IndexModel[T]]): Future[Unit]
+  def createIndexes[T: Codec](indexes: List[IndexModel[T]])(implicit exc: ExecutionContext): Future[Unit]
 
   def listIndexes(): ListIndexesCursor
 
-  def dropIndex(indexName: String): Future[Unit]
+  def dropIndex(indexName: String)(implicit exc: ExecutionContext): Future[Unit]
 
-  def dropIndex[T: Codec](keys: T): Future[Unit]
+  def dropIndex[T: Codec](keys: T)(implicit exc: ExecutionContext): Future[Unit]
 
-  def dropIndexes(): Future[Unit]
+  def dropIndexes()(implicit exc: ExecutionContext): Future[Unit]
 
   def renameCollection(
     newCollectionNamespace: MongoNamespace,
-    options: RenameCollectionOptions = new RenameCollectionOptions()): Future[Unit]
+    options: RenameCollectionOptions = new RenameCollectionOptions())(implicit exc: ExecutionContext): Future[Unit]
 }

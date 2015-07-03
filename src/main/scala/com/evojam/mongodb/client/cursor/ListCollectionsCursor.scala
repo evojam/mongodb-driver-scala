@@ -1,5 +1,7 @@
 package com.evojam.mongodb.client.cursor
 
+import scala.concurrent.ExecutionContext
+
 import com.mongodb.ReadPreference
 import org.bson.codecs.{ Codec, Encoder }
 
@@ -21,17 +23,17 @@ private[client] case class ListCollectionsCursor[T: Encoder](
   require(maxTime != null, "maxTime cannot be null")
   require(batchSize != null, "batchSize cannot be null")
 
-  override protected def rawHead[R: Codec]() =
+  override protected def rawHead[R: Codec]()(implicit exc: ExecutionContext) =
     cursor(queryOperation.copy(batchSize = Some(-1)))
       .head()
 
-  override protected def rawForeach[R: Codec](f: R => Unit) =
+  override protected def rawForeach[R: Codec](f: R => Unit)(implicit exc: ExecutionContext) =
     cursor().foreach(f)
 
-  override protected def rawObservable[R: Codec]() =
+  override protected def rawObservable[R: Codec]()(implicit exc: ExecutionContext) =
     cursor().observable()
 
-  override protected def rawObservable[R: Codec](batchSize: Int) =
+  override protected def rawObservable[R: Codec](batchSize: Int)(implicit exc: ExecutionContext) =
     cursor().observable(batchSize)
 
   def filter(filter: T): ListCollectionsCursor[T] = {

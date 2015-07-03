@@ -1,6 +1,7 @@
 package com.evojam.mongodb.client
 
 import scala.collection.JavaConversions._
+import scala.concurrent.ExecutionContext
 import scala.language.implicitConversions
 
 import com.mongodb._
@@ -37,7 +38,7 @@ private[client] case class MongoCollectionImpl(
   override def withWriteConcern(writeConcern: WriteConcern) =
     this.copy(writeConcern = writeConcern)
 
-  override def count[T: Codec](filter: T, options: CountOptions) =
+  override def count[T: Codec](filter: T, options: CountOptions)(implicit exc: ExecutionContext) =
     executor.executeAsync(
       CountOperation(namespace, Option(filter), options), readPreference)
       .map(_.longValue)
@@ -57,11 +58,12 @@ private[client] case class MongoCollectionImpl(
 
   // TODO: Bulk write/read
 
-  override protected def rawInsert[T: Codec](document: T) =
-    executeWrite(new InsertRequest(BsonUtil.toBson(document)))(_ => ())
+  override protected def rawInsert[T: Codec](document: T)(implicit exc: ExecutionContext) =
+    executeWrite(new InsertRequest(BsonUtil.toBson(document)))(_ => (), exc)
       .toBlocking.toFuture
 
-  override protected def rawInsertAll[T: Codec](documents: List[T], options: InsertManyOptions) =
+  override protected def rawInsertAll[T: Codec](documents: List[T], options: InsertManyOptions)
+    (implicit exc: ExecutionContext) =
     executor.executeAsync(
       WriteOperation(
         namespace,
@@ -71,7 +73,7 @@ private[client] case class MongoCollectionImpl(
       .toList.map(_ => ())
       .toBlocking.toFuture
 
-  override def delete[T: Codec](filter: T, multi: Boolean) =
+  override def delete[T: Codec](filter: T, multi: Boolean)(implicit exc: ExecutionContext) =
     executeWrite[DeleteResult](new DeleteRequest(BsonUtil.toBson(filter)))
       .toBlocking.toFuture
 
@@ -79,7 +81,7 @@ private[client] case class MongoCollectionImpl(
     filter: T,
     update: T,
     upsert: Boolean = false,
-    multi: Boolean = false) =
+    multi: Boolean = false)(implicit exc: ExecutionContext) =
     executeWrite[UpdateResult[T]](
       new UpdateRequest(BsonUtil.toBson(filter), BsonUtil.toBson(update), WriteRequest.Type.UPDATE)
         .upsert(upsert)
@@ -89,7 +91,8 @@ private[client] case class MongoCollectionImpl(
   override def upsert[T: Codec](
     filter: T,
     update: T,
-    multi: Boolean = false) = this.update(filter, update, upsert = true, multi = multi)
+    multi: Boolean = false)(implicit exc: ExecutionContext) =
+    this.update(filter, update, upsert = true, multi = multi)
 
   // FIXME: When update is not valid document (eg.: instead of { $set : { field: value } } it is { field: value } the
   // weird exception is thrown by the driver...
@@ -107,7 +110,7 @@ private[client] case class MongoCollectionImpl(
       executor = executor,
       namespace = namespace)
 
-  override def drop() =
+  override def drop()(implicit exc: ExecutionContext) =
     executor.executeAsync(new DropCollectionOperation(namespace))
       .map(_ => ())
       .toBlocking.toFuture
@@ -116,10 +119,10 @@ private[client] case class MongoCollectionImpl(
     indexes.foldRight(List.empty[IndexRequest])(
       (model, requests) => requests :+ model.asIndexRequest())
 
-  override def createIndex[T: Codec](key: T, options: IndexOptions) =
+  override def createIndex[T: Codec](key: T, options: IndexOptions)(implicit exc: ExecutionContext) =
     createIndexes(List(IndexModel(key, options)))
 
-  override def createIndexes[T: Codec](indexes: List[IndexModel[T]]) =
+  override def createIndexes[T: Codec](indexes: List[IndexModel[T]])(implicit exc: ExecutionContext) =
     executor.executeAsync(CreateIndexesOperation(namespace, buildIndexRequests(indexes)))
       .map(_ => ())
       .toBlocking.toFuture
@@ -127,29 +130,32 @@ private[client] case class MongoCollectionImpl(
   override def listIndexes() =
     ListIndexesCursor(namespace, readPreference, executor = executor)
 
-  override def dropIndex(indexName: String) =
+  override def dropIndex(indexName: String)(implicit exc: ExecutionContext) =
     executor.executeAsync(DropIndexOperation(namespace, indexName))
       .map(_ => ())
       .toBlocking.toFuture
 
-  override def dropIndex[T: Codec](keys: T) =
+  override def dropIndex[T: Codec](keys: T)(implicit exc: ExecutionContext) =
     executor.executeAsync(DropIndexOperation(namespace, BsonUtil.toBson(keys)))
       .map(_ => ())
       .toBlocking.toFuture
 
-  override def dropIndexes() =
+  override def dropIndexes()(implicit exc: ExecutionContext) =
     dropIndex("*")
 
-  override def renameCollection(newCollectionNamespace: MongoNamespace, options: RenameCollectionOptions) =
+  override def renameCollection(newCollectionNamespace: MongoNamespace, options: RenameCollectionOptions)
+    (implicit exc: ExecutionContext) =
     executor.executeAsync(new RenameCollectionOperation(namespace, newCollectionNamespace)
       .dropTarget(options.isDropTarget))
       .map(_ => ())
       .toBlocking.toFuture
 
-  private def executeWrite[T](request: WriteRequest)(implicit f: BulkWriteResult => T) =
+  private def executeWrite[T](request: WriteRequest)
+    (implicit f: BulkWriteResult => T, exc: ExecutionContext) =
     executeSingleWriteRequest(request).map(f)
 
-  private def executeSingleWriteRequest(request: WriteRequest): Observable[BulkWriteResult] =
+  private def executeSingleWriteRequest(request: WriteRequest)
+    (implicit exc: ExecutionContext): Observable[BulkWriteResult] =
     executor.executeAsync[BulkWriteResult](
       WriteOperation(namespace, List(request), ordered = true, writeConcern))
 }

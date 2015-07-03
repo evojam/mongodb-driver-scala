@@ -1,6 +1,6 @@
 package com.evojam.mongodb.client.builder
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 import com.mongodb.MongoNamespace
 import com.mongodb.operation.FindAndUpdateOperation
@@ -27,7 +27,7 @@ case class FindAndModifyBuilder[T: Codec](
   require(update != null, "update cannot be null")
   require(projection != null, "projection cannot be null")
 
-  override def collect[R]()(implicit reader: Reader[R]): Future[Option[R]] =
+  override def collect[R]()(implicit reader: Reader[R], exc: ExecutionContext): Future[Option[R]] =
     executor.executeAsync(findAndUpdateOperation(
       new FindAndUpdateOperation(namespace, reader.codec, BsonUtil.toBson(update))))
       .map(Option(_).map(reader.read))

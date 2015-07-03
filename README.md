@@ -18,6 +18,7 @@ When MongoDB released the new *Core Async Driver*, we decided to start this proj
 ## Going Async
 
 ```scala
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 import com.evojam.mongodb.client._

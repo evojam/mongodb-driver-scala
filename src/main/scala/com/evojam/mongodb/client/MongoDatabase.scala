@@ -1,6 +1,6 @@
 package com.evojam.mongodb.client
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadPreference
@@ -31,7 +31,7 @@ class MongoDatabase(
   def withWriteConcern(writeConcern: WriteConcern): MongoDatabase =
     new MongoDatabase(name, readPref, writeConcern, executor)
 
-  def listCollectionNames(): Future[List[String]] =
+  def listCollectionNames()(implicit exc: ExecutionContext): Future[List[String]] =
     ListCollectionsCursor[BsonDocument](
       name,
       ReadPreference.primary(),
@@ -46,7 +46,7 @@ class MongoDatabase(
   def collection(collectionName: String): MongoCollection =
     MongoCollectionImpl(new MongoNamespace(name, collectionName), readPref, writeConcern, executor)
 
-  def runCommand[T: Codec](command: T): Future[T] = {
+  def runCommand[T: Codec](command: T)(implicit exc: ExecutionContext): Future[T] = {
     require(command != null, "command cannot be null")
 
     executor.executeAsync(
@@ -54,7 +54,7 @@ class MongoDatabase(
       .toBlocking.toFuture
   }
 
-  def runCommand[T: Codec](command: T, readPref: ReadPreference): Future[T] = {
+  def runCommand[T: Codec](command: T, readPref: ReadPreference)(implicit exc: ExecutionContext): Future[T] = {
     require(command != null, "command cannot be null")
     require(readPref != null, "readPref cannot be null")
 
@@ -64,23 +64,23 @@ class MongoDatabase(
       .toBlocking.toFuture
   }
 
-  def drop(): Future[Unit] =
+  def drop()(implicit exc: ExecutionContext): Future[Unit] =
     executor.executeAsync(new DropDatabaseOperation(name))
       .map(_ => ())
       .toBlocking.toFuture
 
-  def createCollection(collectionName: String): Future[Unit] =
+  def createCollection(collectionName: String)(implicit exc: ExecutionContext): Future[Unit] =
     createCollection(collectionName, CreateCollectionOptions())
 
   def createCollection(
     collectionName: String,
-    options: CreateCollectionOptions): Future[Unit] =
+    options: CreateCollectionOptions)(implicit exc: ExecutionContext): Future[Unit] =
     createCollection[Document](collectionName, options, None)
 
   def createCollection[T: Codec](
     collectionName: String,
     options: CreateCollectionOptions,
-    storageEngineOptions: Option[T]): Future[Unit] = {
+    storageEngineOptions: Option[T])(implicit exc: ExecutionContext): Future[Unit] = {
     val opts = new CreateCollectionOperation(name, collectionName)
       .capped(options.capped)
       .sizeInBytes(options.size)

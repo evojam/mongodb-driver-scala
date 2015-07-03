@@ -2,7 +2,7 @@ package com.evojam.mongodb.client.cursor
 
 import java.util.concurrent.TimeUnit
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 import com.mongodb.operation.MapReduceWithInlineResultsOperation
 import com.mongodb.{MongoNamespace, ReadPreference}
@@ -65,16 +65,16 @@ private[client] case class MapReduceCursor[T: Encoder](
   def batchSize(batchSize: Int) =
     this.copy(options = options.copy(batchSize = Some(batchSize)))
 
-  override protected def rawHead[R: Codec]() =
+  override protected def rawHead[R: Codec]()(implicit exc: ExecutionContext) =
     cursor().head()
 
-  override protected def rawObservable[R: Codec]() =
+  override protected def rawObservable[R: Codec]()(implicit exc: ExecutionContext) =
     cursor().observable()
 
-  override protected def rawObservable[R: Codec](batchSize: Int) =
+  override protected def rawObservable[R: Codec](batchSize: Int)(implicit exc: ExecutionContext) =
     cursor().observable(batchSize)
 
-  override protected def rawForeach[R: Codec](f: (R) => Unit) =
+  override protected def rawForeach[R: Codec](f: (R) => Unit)(implicit exc: ExecutionContext) =
     cursor().foreach(f)
 
   private def cursor[R: Codec](): OperationCursor[R] =
