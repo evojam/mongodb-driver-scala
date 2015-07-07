@@ -12,7 +12,8 @@ import com.evojam.mongodb.client.builder.{FindAndRemoveBuilder, FindAndUpdateBui
 import com.evojam.mongodb.client.codec.Writer
 import com.evojam.mongodb.client.cursor._
 import com.evojam.mongodb.client.model.IndexModel
-import com.evojam.mongodb.client.model.result.UpdateResult
+import com.evojam.mongodb.client.model.bulk.WriteModel
+import com.evojam.mongodb.client.model.result.{BulkWriteResult, UpdateResult}
 
 trait MongoCollection {
   def withReadPreference(readPreference: ReadPreference): MongoCollection
@@ -56,6 +57,9 @@ trait MongoCollection {
   def mapReduce[T: Codec](
     mapFunction: String,
     reduceFunction: String): MapReduceCursor[T]
+
+  def bulkWrite(requests: List[WriteModel], ordered: Boolean = true)
+    (implicit exc: ExecutionContext): Future[BulkWriteResult]
 
   def delete[T: Codec](filter: T, multi: Boolean = false)(implicit exc: ExecutionContext): Future[DeleteResult]
 

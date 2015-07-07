@@ -5,19 +5,20 @@ import scala.concurrent.ExecutionContext
 import scala.language.implicitConversions
 
 import com.mongodb._
-import com.mongodb.bulk._
+import com.mongodb.bulk.{DeleteRequest, WriteRequest, UpdateRequest, InsertRequest, IndexRequest, BulkWriteResult => MongoBulkWriteResult} // scalastyle:ignore
 import com.mongodb.client.model._
-import com.mongodb.client.result.DeleteResult
+import com.mongodb.client.result.{DeleteResult => MongoDeleteResult}
 import com.mongodb.operation._
 import org.bson.codecs.Codec
 import rx.lang.scala.Observable
 
 import com.evojam.mongodb.client.builder.{FindAndRemoveBuilder, FindAndUpdateBuilder}
 import com.evojam.mongodb.client.cursor._
+import com.evojam.mongodb.client.model.{IndexModel, WriteOperation}
+import com.evojam.mongodb.client.model.bulk.{Delete, Update, Replace, Insert, WriteModel}
 import com.evojam.mongodb.client.model.operation.{CountOperation, CreateIndexesOperation, DropIndexOperation}
 import com.evojam.mongodb.client.model.options.{FindOptions, MapReduceOptions}
-import com.evojam.mongodb.client.model.result.UpdateResult
-import com.evojam.mongodb.client.model.{IndexModel, WriteOperation}
+import com.evojam.mongodb.client.model.result.{BulkWriteResult, UpdateResult}
 import com.evojam.mongodb.client.util.BsonUtil
 import com.evojam.mongodb.client.util.Conversions._
 
@@ -53,10 +54,28 @@ private[client] case class MongoCollectionImpl(
   override def aggregate[T: Codec](pipeline: List[T]) =
     AggregateCursor(pipeline, namespace, readPreference, executor)
 
-  def mapReduce[T: Codec](mapFunction: String, reduceFunction: String): MapReduceCursor[T] =
+  override def mapReduce[T: Codec](mapFunction: String, reduceFunction: String) =
     MapReduceCursor(mapFunction, reduceFunction, readPreference, namespace, executor, MapReduceOptions[T]())
 
-  // TODO: Bulk write/read
+  override def bulkWrite(requests: List[WriteModel], ordered: Boolean)(implicit exc: ExecutionContext) =
+    executor.executeAsync(new MixedBulkWriteOperation(namespace, writeRequests(requests), ordered, writeConcern))
+      .map(BulkWriteResult.mongo2BulkWriteResult)
+      .toBlocking.toFuture
+
+  private def writeRequests(requests: List[WriteModel]) = requests.map {
+    case insert @ Insert(_) =>
+      new InsertRequest(insert.documentBson)
+    case replace @ Replace(_, _, upsert) =>
+      new UpdateRequest(replace.filterBson, replace.replaceBson, WriteRequest.Type.REPLACE)
+        .upsert(upsert)
+    case update @ Update(_, _, upsert, multi) =>
+      new UpdateRequest(update.filterBson, update.updateBson, WriteRequest.Type.UPDATE)
+        .upsert(upsert)
+        .multi(multi)
+    case delete @ Delete(_, multi) =>
+      new DeleteRequest(delete.filterBson)
+        .multi(multi)
+  }
 
   override protected def rawInsert[T: Codec](document: T)(implicit exc: ExecutionContext) =
     executeWrite(new InsertRequest(BsonUtil.toBson(document)))(_ => (), exc)
@@ -74,7 +93,7 @@ private[client] case class MongoCollectionImpl(
       .toBlocking.toFuture
 
   override def delete[T: Codec](filter: T, multi: Boolean)(implicit exc: ExecutionContext) =
-    executeWrite[DeleteResult](new DeleteRequest(BsonUtil.toBson(filter)))
+    executeWrite[MongoDeleteResult](new DeleteRequest(BsonUtil.toBson(filter)))
       .toBlocking.toFuture
 
   override def update[T: Codec](
@@ -157,11 +176,11 @@ private[client] case class MongoCollectionImpl(
       .toBlocking.toFuture
 
   private def executeWrite[T](request: WriteRequest)
-    (implicit f: BulkWriteResult => T, exc: ExecutionContext) =
+    (implicit f: MongoBulkWriteResult => T, exc: ExecutionContext) =
     executeSingleWriteRequest(request).map(f)
 
   private def executeSingleWriteRequest(request: WriteRequest)
-    (implicit exc: ExecutionContext): Observable[BulkWriteResult] =
-    executor.executeAsync[BulkWriteResult](
+    (implicit exc: ExecutionContext): Observable[MongoBulkWriteResult] =
+    executor.executeAsync[MongoBulkWriteResult](
       WriteOperation(namespace, List(request), ordered = true, writeConcern))
 }

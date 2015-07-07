@@ -3,7 +3,7 @@ package com.evojam.mongodb.client.model.result
 import scala.collection.JavaConversions._
 import scala.language.implicitConversions
 
-import com.mongodb.bulk.BulkWriteResult
+import com.mongodb.bulk.{BulkWriteResult => MongoBulkWriteResult}
 import com.mongodb.client.result.{UpdateResult => MongoUpdateResult}
 import org.bson.codecs.Codec
 
@@ -40,7 +40,7 @@ object UpdateResult {
   }
 
   implicit def bulkWriteResult2UpdateResult[T: Codec](
-    result: BulkWriteResult): UpdateResult[T] = result.wasAcknowledged match {
+    result: MongoBulkWriteResult): UpdateResult[T] = result.wasAcknowledged match {
     case true => AcknowledgedUpdateResult(
       result.getMatchedCount,
       result.getModifiedCount,

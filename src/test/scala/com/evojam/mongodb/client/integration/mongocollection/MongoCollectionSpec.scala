@@ -5,6 +5,9 @@ import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import scala.util.Random
 
+import com.evojam.mongodb.client.model.bulk.{Replace, Insert}
+import com.evojam.mongodb.client.model.result.BulkWriteResult
+import com.mongodb.WriteConcern
 import org.bson._
 import org.specs2.mutable.Specification
 
@@ -216,6 +219,33 @@ class MongoCollectionSpec extends Specification with DocumentGenerator {
         .toList.toBlocking.toFuture
 
       res must haveSize[List[List[Document]]](0).await
+    }
+
+    "perform insert operations in bulk" in {
+      val writes = List(
+        Insert(new Document("prop", "value1")),
+        Insert(new Document("prop", "value2")),
+        Insert(new Document("prop", "value3")))
+
+      val res = collection
+        .withWriteConcern(WriteConcern.ACKNOWLEDGED)
+        .bulkWrite(writes)
+
+      res must be_==(BulkWriteResult(true, Some(writes.length), Some(0), Some(0), Some(0), List())).await
+    }
+
+    "perform replace operation in bulk" in {
+      val doc = new Document("prop", "unique-value")
+
+      val replace = List(
+        Insert(doc),
+        Replace(doc, new Document("prop", "new value")))
+
+      val res = collection
+        .withWriteConcern(WriteConcern.ACKNOWLEDGED)
+        .bulkWrite(replace)
+
+      res must be_==(BulkWriteResult(true, Some(1), Some(1), Some(0), Some(1), List())).await
     }
   }
 }
