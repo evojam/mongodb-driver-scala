@@ -46,14 +46,14 @@ Current stable version:
 
 ```scala
 resolvers += Resolver.sonatypeRepo("releases")
-libraryDependencies += "com.evojam" % "mongo-driver-scala_2.11" % "0.4.1"
+libraryDependencies += "com.evojam" % "mongo-driver-scala_2.11" % "0.5.0"
 ```
 
 Current snapshot:
 
 ```scala
 resolvers += Resolver.sonatypeRepo("snapshots")
-libraryDependencies += "com.evojam" % "mongo-driver-scala_2.11" % "0.4.2-SNAPSHOT"
+libraryDependencies += "com.evojam" % "mongo-driver-scala_2.11" % "0.5.0-SNAPSHOT"
 ```
 
 ## Framework Integration

@@ -2,9 +2,9 @@ organization := "com.evojam"
 
 name := "mongo-driver-scala"
 
-scalaVersion := "2.11.6"
+scalaVersion := "2.11.7"
 
-crossScalaVersions := Seq("2.11.6")
+crossScalaVersions := Seq("2.11.7")
 
 scalacOptions ++= Seq(
   "-target:jvm-1.7",
@@ -33,8 +33,8 @@ libraryDependencies ++= Seq(
   "org.specs2" %% "specs2-core" % "2.4.11" % "test",
   "org.specs2" %% "specs2-junit" % "2.4.11" % "test",
   "org.specs2" %% "specs2-mock" % "2.4.11" % "test",
-  "io.netty" % "netty-all" % "4.0.28.Final",
-  "org.mongodb" % "mongodb-driver-core" % "3.0.1",
+  "io.netty" % "netty-all" % "4.0.29.Final",
+  "org.mongodb" % "mongodb-driver-core" % "3.0.3",
   "io.reactivex" % "rxscala_2.11" % "0.25.0",
   "ch.qos.logback" % "logback-classic" % "1.1.3"
 )
