@@ -1,4 +1,32 @@
-# MongoDB Driver Scala
+# This project is no longer maintained.
+
+We originally developed a wrapper for [MongoDB Java Driver] that would provide
+idiomatic Scala API. We did that because there was no good Scala solution at the
+time. There was no official Scala driver and the community-based [ReactiveMongo]
+lacked support and stayed behind the Java versions. The Java driver, on the
+other hand, was quite slow in certain use cases. In fact, once ReactiveMongo
+provided support for MongoDB 3.0 it turned out that it was over tenfold faster
+than the original Java Driver. In general we had to choose between suboptimal
+Java driver or outdated ReactiveMongo.
+
+This has changed. [Our recent microbenchmarks] show that the current versions of
+Java driver are no longer inferior in terms of speed. There is even an [official
+Scala driver], which is really just a small facade built on top of the async
+Java driver.
+
+[Reactivemongo][ReactiveMongo], on the other hand, become a go-to library for
+Akka and Play fans. It uses Play Iteratees and was designed with good scaling in
+mind. There is also a [ReactiveMongo Play module] for easy integration with
+Playframework and its JSON library. So please switch either to [ReactiveMongo]
+or the [official Scala driver].
+
+  [MongoDB Java Driver]: https://docs.mongodb.org/ecosystem/drivers/java/
+  [ReactiveMongo]: http://reactivemongo.org/
+  [official Scala driver]: http://mongodb.github.io/mongo-scala-driver/
+  [ReactiveMongo Play module]: https://github.com/ReactiveMongo/Play-ReactiveMongo
+  [Our recent microbenchmarks]: https://github.com/evojam/mongo-drivers-benchmarks
+
+# Original Readme follows:
 
 ![Travis Build Status](https://travis-ci.org/evojam/mongodb-driver-scala.svg)
 [![Codacy Badge](https://www.codacy.com/project/badge/305004faf8194a27b93e3a9d2b04bbb9)](https://www.codacy.com/app/evojam/mongodb-driver-scala)
